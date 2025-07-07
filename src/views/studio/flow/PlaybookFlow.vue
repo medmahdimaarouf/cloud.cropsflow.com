@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { Controls } from '@vue-flow/controls';
 import { VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';

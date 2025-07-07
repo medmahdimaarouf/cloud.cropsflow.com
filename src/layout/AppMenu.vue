@@ -1,9 +1,17 @@
-<script setup>
+<script lang="ts" setup>
 import { ref } from 'vue';
-
 import AppMenuItem from './AppMenuItem.vue';
 
-const model = ref([
+type MenuItem = {
+    label?: string;
+    icon?: string;
+    to?: string;
+    routerLink?: string[];
+    items?: MenuItem[];
+    separator?: boolean;
+};
+
+const model = ref<MenuItem[]>([
     {
         label: 'app',
         routerLink: ['/'],
@@ -18,11 +26,6 @@ const model = ref([
                 icon: 'pi pi-fw pi-palette',
                 to: '/studio'
             },
-            /*{
-                        label: 'Playbook',
-                        icon: 'pi pi-fw pi-sitemap',
-                        routerLink: ['/design']
-                    },*/
             {
                 label: 'Monitoring',
                 icon: 'pi pi-fw pi-gauge',
@@ -38,7 +41,6 @@ const model = ref([
                 icon: 'pi pi-fw pi-megaphone',
                 to: '/events'
             },
-
             {
                 label: 'Agents',
                 icon: 'pi pi-fw pi-desktop',

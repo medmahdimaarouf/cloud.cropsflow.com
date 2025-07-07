@@ -1,12 +1,12 @@
-<script setup>
+<script lang="ts" setup>
 import { useLayout } from '@/layout/composables/layout';
-import { computed, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import AppSidebar from './AppSidebar.vue';
 import AppTopbar from './AppTopbar.vue';
-
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
-const outsideClickListener = ref(null);
+// Use proper type for event listener (MouseEvent handler)
+const outsideClickListener = ref<((e: MouseEvent) => void) | null>(null);
 
 watch(isSidebarActive, (newVal) => {
     if (newVal) {
@@ -14,6 +14,11 @@ watch(isSidebarActive, (newVal) => {
     } else {
         unbindOutsideClickListener();
     }
+});
+
+// Ensure the listener is removed on unmount
+onUnmounted(() => {
+    unbindOutsideClickListener();
 });
 
 const containerClass = computed(() => {
@@ -28,7 +33,7 @@ const containerClass = computed(() => {
 
 function bindOutsideClickListener() {
     if (!outsideClickListener.value) {
-        outsideClickListener.value = (event) => {
+        outsideClickListener.value = (event: MouseEvent) => {
             if (isOutsideClicked(event)) {
                 layoutState.overlayMenuActive = false;
                 layoutState.staticMenuMobileActive = false;
@@ -41,16 +46,19 @@ function bindOutsideClickListener() {
 
 function unbindOutsideClickListener() {
     if (outsideClickListener.value) {
-        document.removeEventListener('click', outsideClickListener);
+        document.removeEventListener('click', outsideClickListener.value);
         outsideClickListener.value = null;
     }
 }
 
-function isOutsideClicked(event) {
-    const sidebarEl = document.querySelector('.layout-sidebar');
-    const topbarEl = document.querySelector('.layout-menu-button');
+function isOutsideClicked(event: MouseEvent): boolean {
+    const target = event.target as HTMLElement | null;
+    const sidebarEl = document.querySelector('.layout-sidebar') as HTMLElement | null;
+    const topbarEl = document.querySelector('.layout-menu-button') as HTMLElement | null;
 
-    return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
+    if (!sidebarEl || !topbarEl || !target) return false;
+
+    return !(sidebarEl === target || sidebarEl.contains(target) || topbarEl === target || topbarEl.contains(target));
 }
 </script>
 
