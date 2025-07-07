@@ -12,6 +12,7 @@
     transition: left var(--layout-section-transition-duration);
     display: flex;
     align-items: center;
+    border-bottom: 1px solid rgba(170, 170, 170, 0.37);
 
     .layout-topbar-logo-container {
         width: 20rem;
@@ -37,10 +38,18 @@
         }
     }
 
+    .layout-topbar-system-info{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: 1.4rem;
+        cursor: pointer;
+    }
     .layout-topbar-action {
         display: inline-flex;
         justify-content: center;
         align-items: center;
+        color: var(--text-color-secondary);
         border-radius: 50%;
         width: 2.5rem;
         height: 2.5rem;
@@ -155,47 +164,5 @@
         .layout-topbar-menu-content {
             flex-direction: column;
         }
-    }
-}
-
-.config-panel {
-    .config-panel-label {
-        font-size: 0.875rem;
-        color: var(--text-secondary-color);
-        font-weight: 600;
-        line-height: 1;
-    }
-
-    .config-panel-colors {
-        > div {
-            padding-top: 0.5rem;
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            justify-content: space-between;
-
-            button {
-                border: none;
-                width: 1.25rem;
-                height: 1.25rem;
-                border-radius: 50%;
-                padding: 0;
-                cursor: pointer;
-                outline-color: transparent;
-                outline-width: 2px;
-                outline-style: solid;
-                outline-offset: 1px;
-
-                &.active-color {
-                    outline-color: var(--primary-color);
-                }
-            }
-        }
-    }
-
-    .config-panel-settings {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
     }
 }

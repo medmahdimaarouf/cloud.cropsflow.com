@@ -14,6 +14,21 @@ const router = createRouter({
                     component: () => import('@/views/Dashboard.vue')
                 },
                 {
+                    path: '/studio',
+                    name: 'studio',
+                    component: () => import('@/views/studio/StudioLayout.vue')
+                },
+                {
+                    path: '/studio/:id',
+                    name: 'TaskTemplateDesigner',
+                    component: () => import('@/views/studio/TaskTemplateDesigner.vue')
+                },
+                {
+                    path: '/events',
+                    name: 'EventsPushLayout',
+                    component: () => import('@/views/events/EventsPushLayout.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')
