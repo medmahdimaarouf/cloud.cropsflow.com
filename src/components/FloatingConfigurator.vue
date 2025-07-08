@@ -1,4 +1,4 @@
-<script setup>
+<script type="ts" setup>
 import AppConfigurator from '@/layout/AppConfigurator.vue';
 import { useLayout } from '@/layout/composables/layout';
 

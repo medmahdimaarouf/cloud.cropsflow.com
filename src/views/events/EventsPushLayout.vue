@@ -1,3 +1,16 @@
+<script lang="ts" setup>
+import Button from 'primevue/button';
+import TabPanel from 'primevue/tabpanel';
+import { ref } from 'vue';
+
+import DataTable from 'primevue/datatable';
+
+const tabs = ref([
+    { title: 'Workspace', content: 'Tab 1 Content', value: '0' },
+    { title: 'Templates', content: 'Tab 2 Content', value: '1' }
+]);
+</script>
+
 <template>
     <div class="container-fluid m-4">
         <div class="flex flex-col sm:flex-row items-center gap-6 mb-8">
@@ -22,40 +35,15 @@
                 </div>
             </template>
         </DataTable>
-        <Tabs value="0">
-            <template #header>
-                <div class="text-end pb-4">
-                    <Button icon="pi pi-external-link" label="Create new"></Button>
-                </div>
-            </template>
-            <TabList>
-                <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">{{ tab.title }}</Tab>
-            </TabList>
-            <TabPanels>
-                <TabPanel :value="'0'">
-                    <span class="text-xl font-bold p-m-0">Tasks templates</span>
-
-                    <WorkspaceTasksTemplates class="mt-4"></WorkspaceTasksTemplates>
-                </TabPanel>
-                <TabPanel :value="'1'"> </TabPanel>
-            </TabPanels>
-        </Tabs>
+        <TabView>
+            <TabPanel :value="0">
+                <template #header>
+                    <i class="pi pi-cog mr-2"></i>
+                    Settings
+                </template>
+                Content for tab 1
+            </TabPanel>
+            <TabPanel header="Tab 2" :value="1"> Content for tab 2 </TabPanel>
+        </TabView>
     </div>
 </template>
-
-<script setup>
-import Button from 'primevue/button';
-import Tab from 'primevue/tab';
-import TabList from 'primevue/tablist';
-import TabPanel from 'primevue/tabpanel';
-import TabPanels from 'primevue/tabpanels';
-import Tabs from 'primevue/tabs';
-import { ref } from 'vue';
-
-import DataTable from 'primevue/datatable';
-
-const tabs = ref([
-    { title: 'Workspace', content: 'Tab 1 Content', value: '0' },
-    { title: 'Templates', content: 'Tab 2 Content', value: '1' }
-]);
-</script>

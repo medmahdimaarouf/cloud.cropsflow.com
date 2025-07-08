@@ -15,11 +15,11 @@
     </EdgeLabelRenderer>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, useVueFlow } from '@vue-flow/core';
 import { computed } from 'vue';
 
-const props = defineProps({
+const props: any = defineProps({
     id: {
         type: String,
         required: true
@@ -65,12 +65,6 @@ const props = defineProps({
 const { removeEdges } = useVueFlow();
 
 const path = computed(() => getBezierPath(props));
-</script>
-
-<script>
-export default {
-    inheritAttrs: false
-};
 </script>
 
 <style>

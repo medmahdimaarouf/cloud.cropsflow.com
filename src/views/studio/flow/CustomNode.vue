@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { Handle, Position } from '@vue-flow/core';
 import { ref } from 'vue';
 
