@@ -1,18 +1,19 @@
 <script lang="ts" setup>
 import { Controls } from '@vue-flow/controls';
-import { VueFlow, useVueFlow } from '@vue-flow/core';
+import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
 import { ref } from 'vue';
+import ActionContextNode from './ActionContextNode.vue';
 import ActionNode from './ActionNode.vue';
 import CustomEdge from './CustomEdge.vue';
 
 const { onConnect, addEdges } = useVueFlow();
+const ConnectToDbAction: Node = { id: 'mongo-connect', type: 'action', data: { name: 'Connect to mongoDb' }, position: { x: 50, y: 0 } };
+const ConnectToDbActionContext: Node = { id: 'mongo-connect-context', type: 'context', data: { name: 'Mongo db context' }, position: { x: 50, y: 25 } };
+const HttpGetAction: Node = { id: 'http-get-action', type: 'action', parentNode: 'mongo-connect-context', data: { name: 'Http get request' }, position: { x: 50, y: 75 }, expandParent: true };
+const HttpGetActionContext: Node = { id: 'http-get-action-context', type: 'action', parentNode: 'mongo-connect-context', data: { name: 'Http response context' }, position: { x: 50, y: 100 }, expandParent: true };
 
-const nodes = ref([
-    { id: '1', type: 'action', label: 'Action', position: { x: 50, y: 0 } },
-    { id: '2', type: 'action', label: 'Action', position: { x: 100, y: 100 } },
-    { id: '3', type: 'action', label: 'Action', position: { x: 150, y: 200 } }
-]);
+const nodes = ref<Array<Node>>([ConnectToDbAction, ConnectToDbActionContext, HttpGetAction, HttpGetActionContext]);
 
 const edges = ref([
     /*{ id: 'e1-2', source: '1', target: '2' },
@@ -26,7 +27,7 @@ onConnect((params) => {
 
 <template>
     <div class="flow">
-        <VueFlow v-model:nodes="nodes" v-model:edges="edges" fit-view-on-init class="vue-flow-basic-example" :min-zoom="0.2" :max-zoom="4">
+        <VueFlow v-model:nodes="nodes" v-model:edges="edges" fit-view-on-init class="vue-flow-basic-example" :default-edge-options="{ type: 'step' }" :min-zoom="0.2" :max-zoom="4">
             <!--<Background pattern-color="#aaa" :gap="4" />-->
 
             <MiniMap />
@@ -35,6 +36,9 @@ onConnect((params) => {
 
             <template #node-action="nodeProps">
                 <ActionNode v-bind="nodeProps" />
+            </template>
+            <template #node-context="nodeProps">
+                <ActionContextNode v-bind="nodeProps" />
             </template>
 
             <template #edge-custom="edgeProps">
