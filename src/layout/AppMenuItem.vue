@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { useLayout } from '@/layout/composables/layout';
 import { onBeforeMount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -27,24 +27,24 @@ const props = defineProps({
 });
 
 const isActiveMenu = ref(false);
-const itemKey = ref(null);
+const itemKey = ref<any>(null);
 
 onBeforeMount(() => {
     itemKey.value = props.parentItemKey ? props.parentItemKey + '-' + props.index : String(props.index);
 
-    const activeItem = layoutState.activeMenuItem;
+    const activeItem = layoutState.activeMenuItem as any;
 
     isActiveMenu.value = activeItem === itemKey.value || activeItem ? activeItem.startsWith(itemKey.value + '-') : false;
 });
 
 watch(
     () => layoutState.activeMenuItem,
-    (newVal) => {
+    (newVal: any) => {
         isActiveMenu.value = newVal === itemKey.value || newVal.startsWith(itemKey.value + '-');
     }
 );
 
-function itemClick(event, item) {
+function itemClick(event: any, item: any, index: any) {
     if (item.disabled) {
         event.preventDefault();
         return;
@@ -63,7 +63,7 @@ function itemClick(event, item) {
     setActiveMenuItem(foundItemKey);
 }
 
-function checkActiveRoute(item) {
+function checkActiveRoute(item: any) {
     return route.path === item.to;
 }
 </script>

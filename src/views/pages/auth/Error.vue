@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
 </script>
 

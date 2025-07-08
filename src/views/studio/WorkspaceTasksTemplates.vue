@@ -26,7 +26,7 @@
     </DataTable>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -37,9 +37,9 @@ import DataTable from 'primevue/datatable';
 // get router instance
 const router = useRouter();
 
-const products = ref([]);
+const products: any = ref([]);
 
-function onTaskEditRequest(id) {
+function onTaskEditRequest(id: any) {
     router.push({ name: 'TaskTemplateDesigner', params: { id } });
 }
 

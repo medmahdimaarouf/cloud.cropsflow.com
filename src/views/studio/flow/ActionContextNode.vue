@@ -20,13 +20,13 @@ function sendMessage() {
 </script>
 
 <template>
-    <div class="flow-node action">
+    <div class="flow-node context">
         <div class="fow-node-header">
             <img src="/demo/images/mongo.png" />
-            <span>{{ props.data.name }}</span>
+            <span>{{ $props.data.name }}</span>
         </div>
         <Handle
-            id="previous"
+            id="precedent"
             type="target"
             :position="Position.Top"
             :style="{
@@ -47,28 +47,7 @@ function sendMessage() {
                 height: '6px'
             }"
         />
-        <Handle
-            id="pipe"
-            type="source"
-            :position="Position.Left"
-            :style="{
-                backgroundColor: 'lime',
-                borderRadius: '0%',
-                width: '6px',
-                height: '6px'
-            }"
-        />
-        <Handle
-            id="context"
-            type="source"
-            :position="Position.Right"
-            :style="{
-                backgroundColor: 'lime',
-                borderRadius: '0%',
-                width: '6px',
-                height: '6px'
-            }"
-        />
+        <slot style="background-color: red; width: 50px; height: 50px" />
     </div>
 </template>
 
@@ -79,6 +58,7 @@ function sendMessage() {
 .flow-node {
     display: flex;
     flex-direction: column;
+    height: 180px;
     border: 1px solid #e0e0e0;
     border-radius: 2px;
     .fow-node-header {
@@ -89,7 +69,6 @@ function sendMessage() {
         height: 24px;
         flex-wrap: nowrap;
         padding: 8px 2px;
-        border-bottom: 1px solid #e0e0e0;
         gap: 6px;
         img,
         svg {
