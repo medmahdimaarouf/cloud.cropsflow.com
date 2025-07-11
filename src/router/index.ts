@@ -16,12 +16,12 @@ const router = createRouter({
                 {
                     path: '/studio',
                     name: 'studio',
-                    component: () => import('@/views/studio/StudioLayout.vue')
+                    component: () => import('@/views/studio/Playbooks.vue')
                 },
                 {
                     path: '/studio/:id',
                     name: 'TaskTemplateDesigner',
-                    component: () => import('@/views/studio/TaskTemplateDesigner.vue')
+                    component: () => import('@/views/studio/PlaybookStudio.vue')
                 },
                 {
                     path: '/events',

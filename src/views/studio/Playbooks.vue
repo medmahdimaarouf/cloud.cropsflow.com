@@ -1,3 +1,9 @@
+<script lang="ts" setup>
+import Button from 'primevue/button';
+import TabPanel from 'primevue/tabpanel';
+import TabView from 'primevue/tabview';
+import PlaybooksList from './PlaybooksList.vue';
+</script>
 <template>
     <div class="container-fluid">
         <div class="flex flex-col sm:flex-row items-center gap-6 m-6">
@@ -16,7 +22,7 @@
                     <span class="text-xl font-bold m-0">Templates</span>
                     <Button icon="pi pi-external-link" label="Create new" />
                 </div>
-                <WorkspaceTasksTemplates class="mt-4" />
+                <PlaybooksList class="mt-4" />
             </TabPanel>
             <TabPanel header="Templates" :value="'0'">
                 <!-- Content for Templates tab -->
@@ -24,10 +30,3 @@
         </TabView>
     </div>
 </template>
-
-<script lang="ts" setup>
-import Button from 'primevue/button';
-import TabPanel from 'primevue/tabpanel';
-import TabView from 'primevue/tabview';
-import WorkspaceTasksTemplates from './WorkspaceTasksTemplates.vue';
-</script>

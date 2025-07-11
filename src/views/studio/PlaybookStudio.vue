@@ -1,15 +1,25 @@
+<script lang="ts" setup>
+import '@vue-flow/core/dist/style.css';
+import Button from 'primevue/button';
+import { useRoute } from 'vue-router';
+import PlaybookFlow from './flow/PlaybookFlow.vue';
+
+const route = useRoute();
+const id = route.params.id as string;
+</script>
+
 <template>
     <div class="studio-layout">
         <!-- Top toolbar -->
         <div class="studio-toolbar top">
             <div class="flex flex-center items-center gap-2 flex-1">
                 <Button icon="pi pi-home" v-tooltip="'Return to home'" severity="secondary" variant="text" class="cursor-pointer" />
-                <div class="v-separator"></div>
+                <!--<div class="v-separator"></div>
 
                 <div class="flex flex-center gap-2">
                     <span>Web sockets communication</span>
                 </div>
-
+-->
                 <div class="v-separator"></div>
 
                 <Button icon="pi pi-undo" v-tooltip="'Undo'" severity="secondary" variant="text" class="cursor-pointer" />
@@ -57,16 +67,6 @@
         <div class="studio-static-panel"></div>
     </div>
 </template>
-
-<script lang="ts" setup>
-import '@vue-flow/core/dist/style.css';
-import Button from 'primevue/button';
-import { useRoute } from 'vue-router';
-import PlaybookFlow from './flow/PlaybookFlow.vue';
-
-const route = useRoute();
-const id = route.params.id as string;
-</script>
 
 <style lang="scss" scoped>
 .studio-layout {

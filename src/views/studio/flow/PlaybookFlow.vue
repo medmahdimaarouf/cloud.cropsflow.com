@@ -1,56 +1,86 @@
 <script lang="ts" setup>
+import { GET_ROOT_NODE } from '@/models/playbook/demo';
 import { Controls } from '@vue-flow/controls';
 import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
-import { ref } from 'vue';
+import { onMounted } from 'vue';
 import ActionContextNode from './ActionContextNode.vue';
 import ActionNode from './ActionNode.vue';
 import CustomEdge from './CustomEdge.vue';
+import StarterNode from './StarterNode.vue';
 
-const { onConnect, addEdges } = useVueFlow();
-const ConnectToDbAction: Node = { id: 'mongo-connect', type: 'action', data: { name: 'Connect to mongoDb' }, position: { x: 50, y: 0 } };
-const ConnectToDbActionContext: Node = { id: 'mongo-connect-context', type: 'context', data: { name: 'Mongo db context' }, position: { x: 50, y: 25 } };
-const HttpGetAction: Node = { id: 'http-get-action', type: 'action', parentNode: 'mongo-connect-context', data: { name: 'Http get request' }, position: { x: 50, y: 75 }, expandParent: true };
-const HttpGetActionContext: Node = { id: 'http-get-action-context', type: 'action', parentNode: 'mongo-connect-context', data: { name: 'Http response context' }, position: { x: 50, y: 100 }, expandParent: true };
+const { onConnect, addEdges, setViewport, project, addNodes } = useVueFlow();
 
-const nodes = ref<Array<Node>>([ConnectToDbAction, ConnectToDbActionContext, HttpGetAction, HttpGetActionContext]);
+onMounted(() => {
+    const screenCenter = { x: window.innerWidth / 2, y: 0 };
+    const graphCenter = project(screenCenter);
 
-const edges = ref([
-    /*{ id: 'e1-2', source: '1', target: '2' },
-    { id: 'e1-3', source: '2', target: '3' }*/
-]);
-
-onConnect((params) => {
-    addEdges([params]);
+    const START: Node = {
+        id: 'start',
+        type: 'start',
+        position: {
+            x: graphCenter.x, // center node of ~80px width
+            y: 10
+        },
+        data: { name: 'Connect to MongoDB' },
+        draggable: false // Optional: lock it in place
+        //selectable: false // Optional: prevent selection
+    };
+    console.log(GET_ROOT_NODE());
+    addNodes([START, ...GET_ROOT_NODE().getAllNodes()]);
 });
 </script>
 
 <template>
-    <div class="flow">
-        <VueFlow v-model:nodes="nodes" v-model:edges="edges" fit-view-on-init class="vue-flow-basic-example" :default-edge-options="{ type: 'step' }" :min-zoom="0.2" :max-zoom="4">
-            <!--<Background pattern-color="#aaa" :gap="4" />-->
+    <div class="playbook-flow">
+        <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
+            <Avatar icon="pi pi-sitemap" size="large" />
+            <div>
+                <span>Playbook name</span>
+                <p>Main Context</p>
+            </div>
+        </div>
+        <div class="flow">
+            <VueFlow :default-zoom="40" :default-position="[0, 0]" :fit-view-on-init="false" :default-edge-options="{ type: 'step' }" :max-zoom="40" :min-zoom="-40">
+                <!--<Background pattern-color="#aaa" :gap="4" />-->
 
-            <MiniMap />
+                <MiniMap style="background-color: #ffffff" />
 
-            <Controls />
+                <Controls />
+                <template #node-start="nodeProps">
+                    <StarterNode v-bind="nodeProps" />
+                </template>
+                <template #node-action="nodeProps">
+                    <ActionNode v-bind="nodeProps" />
+                </template>
 
-            <template #node-action="nodeProps">
-                <ActionNode v-bind="nodeProps" />
-            </template>
-            <template #node-context="nodeProps">
-                <ActionContextNode v-bind="nodeProps" />
-            </template>
+                <template #node-context="nodeProps">
+                    <ActionContextNode v-bind="nodeProps" />
+                </template>
 
-            <template #edge-custom="edgeProps">
-                <CustomEdge v-bind="edgeProps" />
-            </template>
-        </VueFlow>
+                <template #edge-custom="edgeProps">
+                    <CustomEdge v-bind="edgeProps" />
+                </template>
+            </VueFlow>
+        </div>
     </div>
 </template>
 <style lang="scss" scoped>
-.flow {
-    height: 100%;
+.playbook-flow {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
     width: 100%;
-    flex: 1;
+    height: 100%;
+    > div {
+        border-bottom: 1px solid rgba(170, 170, 170, 0.37);
+    }
+    .flow {
+        flex: 1;
+        height: 100%;
+        width: 100%;
+        background-color: rgba(223, 221, 221, 0.37);
+    }
 }
 </style>

@@ -1,4 +1,1 @@
-export class ActionNode {
-    name?: string;
-    icon?: string;
-}
+export * from './playbook';
