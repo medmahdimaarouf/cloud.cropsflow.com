@@ -1,29 +1,21 @@
 <script lang="ts" setup>
+import { ActionNode } from '@/models/playbook';
 import { Handle, Position } from '@vue-flow/core';
-import { defineEmits, defineProps } from 'vue';
+import { defineProps, onMounted } from 'vue';
 
 const props = defineProps<{
-    id: string;
-    data: {
-        name: string;
-    };
+    node: ActionNode;
     selected: boolean;
 }>();
 
-const emit = defineEmits<{
-    (e: 'send', payload: string): void;
-}>();
-
-function sendMessage() {
-    emit('send', 'Hello from child!');
-}
+onMounted(() => {});
 </script>
 
 <template>
     <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
         <Avatar icon="pi pi-sitemap" size="large" />
         <div>
-            <span>{{ $props.data.name }}</span>
+            <span>{{ $props.node.name }}</span>
             <p>Main Context</p>
         </div>
     </div>

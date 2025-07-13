@@ -1,35 +1,26 @@
 <script lang="ts" setup>
+import { ActionNode } from '@/models/playbook';
 import { Handle, Position } from '@vue-flow/core';
-import { defineEmits, defineProps } from 'vue';
+import { defineProps, onMounted } from 'vue';
 
 const props = defineProps<{
-    id: string;
-    data: {
-        name: string;
-    };
+    node: ActionNode;
     selected: boolean;
 }>();
 
-const emit = defineEmits<{
-    (e: 'send', payload: string): void;
-}>();
-
-function sendMessage() {
-    emit('send', 'Hello from child!');
-}
+onMounted(() => {});
 </script>
 
 <template>
     <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
         <Avatar icon="pi pi-sitemap" size="large" />
         <div>
-            <span>{{ $props.data.name }}</span>
+            <span>{{ $props.node.name }}</span>
             <p>Main Context</p>
         </div>
     </div>
-    <slot></slot>
     <Handle
-        id="precedent"
+        id="previous"
         type="target"
         :position="Position.Top"
         :style="{
@@ -50,22 +41,41 @@ function sendMessage() {
             height: '6px'
         }"
     />
-    <slot style="background-color: red; width: 50px; height: 50px" />
+    <Handle
+        id="pipe"
+        type="source"
+        :position="Position.Left"
+        :style="{
+            backgroundColor: 'lime',
+            borderRadius: '0%',
+            width: '6px',
+            height: '6px'
+        }"
+    />
+    <Handle
+        id="context"
+        type="source"
+        :position="Position.Right"
+        :style="{
+            backgroundColor: 'lime',
+            borderRadius: '0%',
+            width: '6px',
+            height: '6px'
+        }"
+    />
 </template>
 
 <style lang="scss">
 .flow-node.selected {
     border: 1px solid var(--primary-color);
 }
-.action-context {
+.flow-node {
     display: flex;
     flex-direction: column;
-    height: 180px;
-    width: 100%;
-    margin: 22px;
+    width: 240px;
     border: 1px solid #e0e0e0;
-    border-radius: 2px;
     background-color: #ffff;
+    border-radius: 2px;
     .fow-node-header {
         display: flex;
         align-items: center;
@@ -74,6 +84,7 @@ function sendMessage() {
         height: 24px;
         flex-wrap: nowrap;
         padding: 8px 2px;
+        border-bottom: 1px solid #e0e0e0;
         gap: 6px;
         img,
         svg {

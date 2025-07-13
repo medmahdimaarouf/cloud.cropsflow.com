@@ -1,11 +1,16 @@
 <script lang="ts" setup>
+import { Playbook } from '@/service/playbook-manager.service';
 import '@vue-flow/core/dist/style.css';
 import Button from 'primevue/button';
 import { useRoute } from 'vue-router';
 import PlaybookFlow from './flow/PlaybookFlow.vue';
-
 const route = useRoute();
 const id = route.params.id as string;
+
+const playbook: Playbook = new Playbook({
+    id: Date.now().toString(),
+    title: 'Play book view'
+});
 </script>
 
 <template>
@@ -50,7 +55,7 @@ const id = route.params.id as string;
             <div class="studio-panel left"></div>
 
             <div class="studio-flow">
-                <PlaybookFlow />
+                <PlaybookFlow :playbook="playbook" />
             </div>
 
             <div class="studio-panel right"></div>

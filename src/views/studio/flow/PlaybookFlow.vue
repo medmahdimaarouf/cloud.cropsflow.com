@@ -1,16 +1,50 @@
 <script lang="ts" setup>
-import { GET_ROOT_NODE } from '@/models/playbook/demo';
+import { ContextNode } from '@/models/playbook/playbook-node';
+import { Playbook, PlaybookViewManager } from '@/service/playbook-manager.service';
 import { Controls } from '@vue-flow/controls';
 import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
 import { onMounted } from 'vue';
-import ActionContextNode from './ActionContextNode.vue';
-import ActionNode from './ActionNode.vue';
-import CustomEdge from './CustomEdge.vue';
+import NodePlaceholder from './PlaceholderNode.vue';
 import StarterNode from './StarterNode.vue';
+import Action from './action/Action.vue';
+import Context from './context/Context.vue';
+import ContextHead from './context/ContextHead.vue';
+const { onConnect, addEdges, setViewport, project, getEdges, addNodes } = useVueFlow();
+const { playbook } = defineProps<{ playbook: Playbook }>();
 
-const { onConnect, addEdges, setViewport, project, addNodes } = useVueFlow();
-
+const playbookViewManager: PlaybookViewManager = new PlaybookViewManager(playbook, useVueFlow());
+function createContext(context: ContextNode) {
+    const ACTION_CONTEXT_NODE: Node = {
+        id: context.id,
+        type: 'context',
+        position: {
+            x: 50,
+            y: 120
+        },
+        data: context,
+        draggable: false,
+        selectable: true,
+        height: 180,
+        width: 380,
+        style: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignContent: 'center',
+            justifyContent: 'center',
+            alignItems: 'center',
+            justifyItems: 'center',
+            border: '1px solid #e0e0e0',
+            borderRadius: ' 2px',
+            backgroundColor: '#ffff',
+            margin: '0px',
+            padding: '0px',
+            zIndex: -1
+        }
+    };
+    addNodes([ACTION_CONTEXT_NODE]);
+    return ACTION_CONTEXT_NODE;
+}
 onMounted(() => {
     const screenCenter = { x: window.innerWidth / 2, y: 0 };
     const graphCenter = project(screenCenter);
@@ -22,12 +56,19 @@ onMounted(() => {
             x: graphCenter.x, // center node of ~80px width
             y: 10
         },
-        data: { name: 'Connect to MongoDB' },
         draggable: false // Optional: lock it in place
         //selectable: false // Optional: prevent selection
     };
-    console.log(GET_ROOT_NODE());
-    addNodes([START, ...GET_ROOT_NODE().getAllNodes()]);
+    const actionContext = new ContextNode({
+        id: 'action-context',
+        name: 'Action with signle context',
+        selector: 'selector',
+        className: 'ActionContext'
+    });
+    addNodes([START]);
+    //createContext(actionContext);
+    playbookViewManager.addNode(actionContext);
+    console.log(getEdges.value);
 });
 </script>
 
@@ -47,25 +88,29 @@ onMounted(() => {
                 <MiniMap style="background-color: #ffffff" />
 
                 <Controls />
+                <template #node-placeholder>
+                    <NodePlaceholder></NodePlaceholder>
+                </template>
                 <template #node-start="nodeProps">
                     <StarterNode v-bind="nodeProps" />
                 </template>
                 <template #node-action="nodeProps">
-                    <ActionNode v-bind="nodeProps" />
+                    <Action :node="nodeProps.data" v-bind="nodeProps" />
                 </template>
 
                 <template #node-context="nodeProps">
-                    <ActionContextNode v-bind="nodeProps" />
+                    <Context :node="nodeProps.data" v-bind="nodeProps" />
                 </template>
 
-                <template #edge-custom="edgeProps">
-                    <CustomEdge v-bind="edgeProps" />
+                <template #node-context-head="nodeProps">
+                    <ContextHead :node="nodeProps.data" v-bind="nodeProps" />
                 </template>
             </VueFlow>
         </div>
     </div>
 </template>
 <style lang="scss" scoped>
+/*   DO NOT TOUCH   */
 .playbook-flow {
     flex-grow: 1;
     display: flex;
@@ -77,6 +122,8 @@ onMounted(() => {
         border-bottom: 1px solid rgba(170, 170, 170, 0.37);
     }
     .flow {
+        display: block;
+        position: relative;
         flex: 1;
         height: 100%;
         width: 100%;
