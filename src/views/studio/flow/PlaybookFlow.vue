@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { ContextNode } from '@/models/playbook/playbook-node';
-import { Playbook, PlaybookViewManager } from '@/service/playbook-manager.service';
+import { ActionNode, ContextNode } from '@/models/playbook/playbook-node';
+import { Playbook, PlaybookContextViewFlowNode, PlaybookViewFlowManager } from '@/service/playbook-vueflow-manager';
 import { Controls } from '@vue-flow/controls';
-import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
+import { VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
 import { onMounted } from 'vue';
 import NodePlaceholder from './PlaceholderNode.vue';
@@ -13,42 +13,49 @@ import ContextHead from './context/ContextHead.vue';
 const { onConnect, addEdges, setViewport, project, getEdges, addNodes } = useVueFlow();
 const { playbook } = defineProps<{ playbook: Playbook }>();
 
-const playbookViewManager: PlaybookViewManager = new PlaybookViewManager(playbook, useVueFlow());
-function createContext(context: ContextNode) {
-    const ACTION_CONTEXT_NODE: Node = {
-        id: context.id,
-        type: 'context',
-        position: {
-            x: 50,
-            y: 120
-        },
-        data: context,
-        draggable: false,
-        selectable: true,
-        height: 180,
-        width: 380,
-        style: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignContent: 'center',
-            justifyContent: 'center',
-            alignItems: 'center',
-            justifyItems: 'center',
-            border: '1px solid #e0e0e0',
-            borderRadius: ' 2px',
-            backgroundColor: '#ffff',
-            margin: '0px',
-            padding: '0px',
-            zIndex: -1
-        }
-    };
-    addNodes([ACTION_CONTEXT_NODE]);
-    return ACTION_CONTEXT_NODE;
-}
+const playbookViewManager: PlaybookViewFlowManager = new PlaybookViewFlowManager(playbook, useVueFlow());
+
 onMounted(() => {
+    playbookViewManager.draw();
+    const firstContext: PlaybookContextViewFlowNode = playbookViewManager.addNode(
+        new ContextNode({
+            id: 'action-context',
+            name: 'Simple Action',
+            selector: 'selector',
+            className: 'ActionContext',
+            resolvedContext: true
+        })
+    ) as PlaybookContextViewFlowNode;
+    firstContext.addNode(
+        new ActionNode({
+            id: 'child-action-context',
+            name: 'Simple Action',
+            selector: 'selector',
+            className: 'ActionContext'
+        })
+    );
+    playbookViewManager.addNode(
+        new ActionNode({
+            id: 'action',
+            name: 'Action with signle context',
+            selector: 'selector',
+            className: 'ActionContext'
+        })
+    );
+    playbookViewManager.addNode(
+        new ActionNode({
+            id: 'action-1',
+            name: 'Action 1 with signle context',
+            selector: 'selector',
+            className: 'ActionContext'
+        })
+    );
+});
+
+/*
+function createStarterNode(): Node {
     const screenCenter = { x: window.innerWidth / 2, y: 0 };
     const graphCenter = project(screenCenter);
-
     const START: Node = {
         id: 'start',
         type: 'start',
@@ -59,17 +66,10 @@ onMounted(() => {
         draggable: false // Optional: lock it in place
         //selectable: false // Optional: prevent selection
     };
-    const actionContext = new ContextNode({
-        id: 'action-context',
-        name: 'Action with signle context',
-        selector: 'selector',
-        className: 'ActionContext'
-    });
-    addNodes([START]);
-    //createContext(actionContext);
-    playbookViewManager.addNode(actionContext);
-    console.log(getEdges.value);
-});
+
+    return START;
+}
+*/
 </script>
 
 <template>

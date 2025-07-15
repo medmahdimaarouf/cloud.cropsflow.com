@@ -1,14 +1,29 @@
 <script lang="ts" setup>
 import { ActionNode } from '@/models/playbook';
-import { Handle, Position } from '@vue-flow/core';
-import { defineProps, onMounted } from 'vue';
+import { Handle, Position, useNode, useVueFlow } from '@vue-flow/core';
+import { defineProps, onMounted, watch } from 'vue';
+
+const { updateNode } = useVueFlow();
 
 const props = defineProps<{
     node: ActionNode;
     selected: boolean;
 }>();
 
-onMounted(() => {});
+const { node } = useNode();
+onMounted(() => {
+    watch(
+        () => node.dimensions,
+        (dimensions) => {
+            updateNode(`${node.id}|next-placeholder`, {
+                position: {
+                    x: dimensions.width / 2 - 10,
+                    y: dimensions.height + 10
+                }
+            });
+        }
+    );
+});
 </script>
 
 <template>

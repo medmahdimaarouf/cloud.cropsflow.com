@@ -1,43 +1,12 @@
 <script lang="ts" setup>
 import { ContextNode } from '@/models/playbook';
 import { Handle, Node, Position, useNode, useVueFlow } from '@vue-flow/core';
+import Button from 'primevue/button';
 import { defineProps, onMounted, watch } from 'vue';
+
 const props = defineProps<{ node: ContextNode }>();
-const { addNodes, updateNode, addEdges, updateEdge } = useVueFlow();
+const { addNodes, updateNode, addEdges, updateNodeDimensions } = useVueFlow();
 const { node } = useNode();
-
-function addHead() {
-    const HEAD_NODE: Node = {
-        id: `${props.node.id}-head`,
-        parentNode: props.node.id,
-        type: 'context-head',
-        position: {
-            x: 0, //node.position.x,
-            y: 0 //node.position.y
-        },
-        data: props.node,
-        draggable: false,
-        selectable: false,
-        expandParent: true,
-        width: node.dimensions.width,
-        height: 60,
-        style: {
-            display: 'flex',
-            alignContent: 'center',
-            flex: '1',
-            flexGrow: 1,
-            padding: '8px',
-            marginRight: '8px',
-            backgroundColor: '#ffff',
-            borderRadius: '2px',
-            border: '1px solid #e0e0e0'
-        }
-    };
-
-    addNodes([HEAD_NODE]);
-
-    return HEAD_NODE;
-}
 
 function addPlaceholder(previousId?: string, nextId?: string) {
     //const { node: previous } = useNode(previousId);
@@ -75,16 +44,34 @@ function addEdge(from: Node, to: Node, type?: string) {
     return edge;
 }
 
-onMounted(() => {
-    const contextHeaader = addHead();
-    const placeholder = addPlaceholder();
-    addEdge(contextHeaader, placeholder);
+onMounted(async () => {
+    const head = useNode(`${node.id}-head`);
+    const nextPlaceHolder = useNode(`${node.id}|next-placeholder`);
     watch(
         () => node.dimensions,
-        (dimensions) => {
+        async (dimensions) => {
             if (dimensions.width > 0 && dimensions.height > 0) {
-                updateNode(contextHeaader.id, { width: dimensions.width });
-                updateNode(placeholder.id, { position: { x: node.dimensions.width / 2 - 10, y: 120 } });
+                updateNode(nextPlaceHolder.id, {
+                    position: {
+                        x: node.dimensions.width / 2 - 10,
+                        y: node.dimensions.height + 10
+                    }
+                });
+                updateNode(head.id, {
+                    style: {
+                        width: `${dimensions.width}px`,
+                        height: '60px',
+                        display: 'flex',
+                        alignContent: 'center',
+                        flex: '1',
+                        flexGrow: 1,
+                        padding: '8px',
+                        marginRight: '8px',
+                        backgroundColor: '#ffff',
+                        borderRadius: '2px',
+                        border: '1px solid #e0e0e0'
+                    }
+                });
             }
         },
         { immediate: true, deep: true }
@@ -93,9 +80,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <slot></slot>
+    <div v-if="!node.data.resolvedContext" class="context-resolve">
+        <Button icon="pi pi-plus-circle" label="Add node" severity="contrast" variant="text" raised />
+    </div>
+
     <Handle
-        :id="node.id + '-previous'"
+        :id="'previous'"
         :type="'target'"
         :position="Position.Top"
         :style="{
@@ -107,7 +97,7 @@ onMounted(() => {
         }"
     />
     <Handle
-        :id="node.id + '-next'"
+        :id="'next'"
         :type="'source'"
         :position="Position.Bottom"
         :style="{
@@ -117,5 +107,28 @@ onMounted(() => {
             height: '6px'
         }"
     />
-    <slot style="background-color: red; width: 50px; height: 50px" />
+
+    <Handle
+        :id="'context'"
+        :type="'target'"
+        :position="Position.Left"
+        :style="{
+            backgroundColor: 'lime',
+            borderRadius: '0%',
+            width: '6px',
+            height: '6px'
+        }"
+    />
 </template>
+<style lang="scss" scoped>
+.context-resolve {
+    padding: 72px 12px 12px 12px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-content: center;
+    gap: 4px;
+}
+</style>

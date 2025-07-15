@@ -14,8 +14,6 @@ export abstract class PlaybookNode implements IPlaybookNode {
     icon?: string;
     className: string;
 
-    public children: PlaybookNode[] = [];
-
     constructor(other?: IPlaybookNode, parent?: PlaybookNode) {
         this.parent = parent;
         this.id = other?.id || Date.now().toString();
@@ -24,16 +22,22 @@ export abstract class PlaybookNode implements IPlaybookNode {
         this.icon = other?.icon;
         this.className = other?.className || '';
     }
+}
 
+export class ActionNode extends PlaybookNode {}
+
+export class ContextNode extends PlaybookNode {
+    resolvedContext?: boolean;
+    constructor(node: PlaybookNode & { resolvedContext?: boolean }, parent?: PlaybookNode) {
+        super(node, parent);
+        this.resolvedContext = node.resolvedContext;
+    }
+    public children: PlaybookNode[] = [];
     public append(child: PlaybookNode): PlaybookNode {
         child.parent = this;
         this.children.push(child);
         return this;
     }
 }
-
-export class ActionNode extends PlaybookNode {}
-
-export class ContextNode extends PlaybookNode {}
 
 export class PipeNode extends PlaybookNode {}

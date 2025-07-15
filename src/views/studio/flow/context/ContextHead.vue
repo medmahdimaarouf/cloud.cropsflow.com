@@ -6,7 +6,9 @@ import { defineProps, onMounted } from 'vue';
 const { addNodes } = useVueFlow();
 const { node } = useNode();
 const props = defineProps<{ node: ContextNode }>();
-
+const emit = defineEmits<{
+    (e: 'updateNodeInternals'): void;
+}>();
 onMounted(() => {});
 </script>
 
@@ -29,5 +31,4 @@ onMounted(() => {});
             height: '6px'
         }"
     />
-    <slot style="background-color: red; width: 50px; height: 50px" />
 </template>

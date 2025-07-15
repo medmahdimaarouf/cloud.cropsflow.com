@@ -1,21 +1,17 @@
 <script lang="ts" setup>
-import { Handle, Position } from '@vue-flow/core';
-import { defineEmits, defineProps } from 'vue';
-const props = defineProps<{
-    id: string;
-    data: {
-        name: string;
-    };
-    selected: boolean;
-}>();
+import { Handle, Position, useNode, useVueFlow } from '@vue-flow/core';
+import { onMounted, watch } from 'vue';
+const { viewport } = useVueFlow();
+const { node } = useNode();
 
-const emit = defineEmits<{
-    (e: 'send', payload: string): void;
-}>();
-
-function sendMessage() {
-    emit('send', 'Hello from child!');
-}
+onMounted(() => {
+    watch(
+        () => viewport.value,
+        (viewport: any) => {
+            //console.log(viewport);
+        }
+    );
+});
 </script>
 
 <template>

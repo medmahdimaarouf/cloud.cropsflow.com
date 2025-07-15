@@ -1,22 +1,6 @@
-<template>
-    <BaseEdge :path="path[0]" />
-
-    <EdgeLabelRenderer>
-        <div
-            :style="{
-                pointerEvents: 'all',
-                position: 'absolute',
-                transform: `translate(-50%, -50%) translate(${path[1]}px,${path[2]}px)`
-            }"
-            class="nodrag nopan"
-        >
-            <button class="edgebutton" @click="removeEdges(id)">×</button>
-        </div>
-    </EdgeLabelRenderer>
-</template>
-
 <script lang="ts" setup>
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useVueFlow } from '@vue-flow/core';
+import { BaseEdge, EdgeLabelRenderer, getStraightPath, useVueFlow } from '@vue-flow/core';
+import Button from 'primevue/button';
 import { computed } from 'vue';
 
 const props: any = defineProps({
@@ -64,18 +48,34 @@ const props: any = defineProps({
 
 const { removeEdges } = useVueFlow();
 
-const path = computed(() => getBezierPath(props));
+const path = computed(() => getStraightPath(props));
 </script>
 
-<style>
-.edgebutton {
-    border-radius: 999px;
-    cursor: pointer;
-}
+<template>
+    <BaseEdge :path="path[0]" />
 
-.edgebutton:hover {
-    box-shadow:
-        0 0 0 2px pink,
-        0 0 0 4px #f05f75;
+    <EdgeLabelRenderer>
+        <div
+            :style="{
+                pointerEvents: 'all',
+                position: 'absolute',
+                transform: `translate(-50%, -50%) translate(${path[1]}px,${path[2]}px)`
+            }"
+            class="nodrag nopan"
+        >
+            <Button class="placeholder-button" icon="pi pi-plus-circle" size="samll" severity="contrast" variant="text" raised rounded />
+        </div>
+    </EdgeLabelRenderer>
+</template>
+
+<style>
+.placeholder-button {
+    max-width: 20px;
+    max-height: 20px;
+    padding: 2px;
+    .p-button-icon {
+        color: #838282;
+        margin: 2px;
+    }
 }
 </style>
