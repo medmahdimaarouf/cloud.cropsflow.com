@@ -1,66 +1,120 @@
 <script lang="ts" setup>
-import { ContextNode } from '@/models/playbook';
-import { Handle, Node, Position, useNode, useVueFlow } from '@vue-flow/core';
-import Button from 'primevue/button';
-import { defineProps, onMounted, watch } from 'vue';
+import { PlaybookContext } from '@/models/playbook';
+import { Dimensions, Handle, Node, Position, useNode, useVueFlow } from '@vue-flow/core';
+import { defineProps, onMounted, reactive, watch } from 'vue';
 
-const props = defineProps<{ node: ContextNode }>();
-const { addNodes, updateNode, addEdges, updateNodeDimensions } = useVueFlow();
-const { node } = useNode();
+const { addNodes, updateNode, addEdges, onEdgesChange, updateNodeDimensions } = useVueFlow();
+const props = defineProps<{ node: PlaybookContext; placeholder: String }>();
 
-function addPlaceholder(previousId?: string, nextId?: string) {
-    //const { node: previous } = useNode(previousId);
-    //const { node: next } = useNode(nextId);
-    const PLACE_HOLDER: Node = {
-        id: 'placeholder', //`${previous.id}|${next.id}`,
-        type: 'placeholder',
-        parentNode: props.node.id,
+const { node: vueFlowNode } = reactive(useNode());
+const playbookContext: PlaybookContext = reactive<PlaybookContext>(props.node);
+const after: String = reactive<String>(props.placeholder);
+
+function drawHeadNode(): void {
+    addNodes({
+        id: `${playbookContext.id}-head`,
+        parentNode: playbookContext.id,
+        type: 'context-head',
         position: {
-            x: node.dimensions.width / 2 - 12.5,
-            y: 120
+            x: 0,
+            y: 0
         },
+        data: playbookContext,
         draggable: false,
         selectable: false,
-        expandParent: true
+        expandParent: true,
+        width: vueFlowNode.dimensions.width,
+        height: 60,
+        style: {
+            display: 'flex',
+            alignContent: 'center',
+            flex: '1',
+            flexGrow: 1,
+            padding: '8px',
+            marginRight: '8px',
+            backgroundColor: '#ffff',
+            borderRadius: '2px',
+            border: '1px solid #e0e0e0'
+        }
+    });
+}
+function drawHeadNextPlaceholderNode() {
+    const actualDimensions: Dimensions = vueFlowNode.dimensions;
+    const NEXT_PLACEHOLDER: Node = {
+        id: `${playbookContext.id}|head-next-placeholder`,
+        type: 'placeholder',
+        position: {
+            x: actualDimensions.width / 2 - 10,
+            y: 70
+        },
+        data: {
+            node: playbookContext,
+            context: playbookContext
+        },
+        parentNode: `${playbookContext.id}`,
+        expandParent: true,
+        draggable: false,
+        selectable: false
     };
+    addNodes(NEXT_PLACEHOLDER);
+    addEdges([
+        {
+            id: `${playbookContext.id}|${NEXT_PLACEHOLDER.id}`,
+            source: `${playbookContext.id}-head`,
+            target: NEXT_PLACEHOLDER.id,
+            sourceHandle: `${playbookContext.id}-next`,
+            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`
+        }
+    ]);
 
-    addNodes([PLACE_HOLDER]);
+    return NEXT_PLACEHOLDER;
+}
+function drawNextPlaceholderNode(): Node {
+    const actualDimensions: Dimensions = vueFlowNode.dimensions;
+    const NEXT_PLACEHOLDER: Node = {
+        id: `${playbookContext.id}|next-placeholder`,
+        type: 'placeholder',
+        position: {
+            x: actualDimensions.width / 2 - 10,
+            y: actualDimensions.height + 20
+        },
+        data: {
+            node: playbookContext,
+            context: playbookContext.context
+        },
+        parentNode: vueFlowNode.id,
+        draggable: false,
+        selectable: false
+    };
+    addNodes([NEXT_PLACEHOLDER]);
+    addEdges([
+        {
+            id: `${playbookContext.id}|${NEXT_PLACEHOLDER.id}`,
+            source: playbookContext.id,
+            target: NEXT_PLACEHOLDER.id,
+            sourceHandle: `${playbookContext.id}-next`,
+            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`
+        }
+    ]);
 
-    return PLACE_HOLDER;
+    return NEXT_PLACEHOLDER;
 }
 
-function addEdge(from: Node, to: Node, type?: string) {
-    const edge = {
-        id: `my-fucking-edge`,
-        source: from.id,
-        sourceHandle: 'context-head-next', // using the handle from ContextHead
-        target: to.id,
-        targetHandle: 'placeholder-previous', // using the handle from Placeholder
-        type: type || 'smoothstep',
-        style: { stroke: '#1976d2', strokeWidth: 2 }
-    };
-
-    addEdges([edge]);
-    return edge;
-}
-
-onMounted(async () => {
-    const head = useNode(`${node.id}-head`);
-    const nextPlaceHolder = useNode(`${node.id}|next-placeholder`);
+function fitHeadSize(): void {
+    const head = useNode(`${playbookContext.id}-head`);
+    const nextPlaceHolder = useNode(`${playbookContext.id}|next-placeholder`);
     watch(
-        () => node.dimensions,
+        () => vueFlowNode.dimensions,
         async (dimensions) => {
             if (dimensions.width > 0 && dimensions.height > 0) {
                 updateNode(nextPlaceHolder.id, {
                     position: {
-                        x: node.dimensions.width / 2 - 10,
-                        y: node.dimensions.height + 10
+                        x: vueFlowNode.dimensions.width / 2 - 10,
+                        y: vueFlowNode.dimensions.height + 10
                     }
                 });
                 updateNode(head.id, {
                     style: {
-                        width: `${dimensions.width}px`,
-                        height: '60px',
                         display: 'flex',
                         alignContent: 'center',
                         flex: '1',
@@ -69,21 +123,41 @@ onMounted(async () => {
                         marginRight: '8px',
                         backgroundColor: '#ffff',
                         borderRadius: '2px',
-                        border: '1px solid #e0e0e0'
+                        border: '1px solid #e0e0e0',
+                        width: dimensions.width + 'px'
                     }
                 });
             }
         },
         { immediate: true, deep: true }
     );
+}
+
+function fix_head_placeholder() {
+    const head = useNode(`${playbookContext.id}-head`);
+    watch(
+        () => head.node.dimensions,
+        (dimensions) => {
+            updateNode(`${playbookContext.id}|head-next-placeholder`, {
+                position: {
+                    x: dimensions.width / 2 - 10,
+                    y: 80
+                }
+            });
+        }
+    );
+}
+
+onMounted(async () => {
+    drawHeadNode();
+    drawHeadNextPlaceholderNode();
+    drawNextPlaceholderNode();
+    fitHeadSize();
+    fix_head_placeholder();
 });
 </script>
 
 <template>
-    <div v-if="!node.data.resolvedContext" class="context-resolve">
-        <Button icon="pi pi-plus-circle" label="Add node" severity="contrast" variant="text" raised />
-    </div>
-
     <Handle
         :id="'previous'"
         :type="'target'"

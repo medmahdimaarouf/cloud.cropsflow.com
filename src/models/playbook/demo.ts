@@ -1,4 +1,4 @@
-import { ActionNode, ContextNode } from '@/models/playbook';
+import { PlaybookAction, PlaybookContext } from '@/models/playbook';
 
 function toPascalCase(str: string): string {
     return str
@@ -16,7 +16,7 @@ function generateId(selector: string): string {
 }
 
 // ROOT
-const mongoCreateDataset = new ContextNode({
+const mongoCreateDataset = new PlaybookContext({
     id: generateId('mongo-create-dataset-action'),
     selector: 'mongo-create-dataset-action',
     name: toPascalCase('mongo-create-dataset-action'),
@@ -25,7 +25,7 @@ const mongoCreateDataset = new ContextNode({
 });
 
 // LEVEL 1
-const httpGet = new ContextNode({
+const httpGet = new PlaybookContext({
     id: generateId('http-get'),
     selector: 'http-get',
     name: toPascalCase('http-get'),
@@ -35,7 +35,7 @@ const httpGet = new ContextNode({
 mongoCreateDataset.append(httpGet);
 
 // LEVEL 2
-const httpHtmlResponse = new ContextNode({
+const httpHtmlResponse = new PlaybookContext({
     id: generateId('http-html-response'),
     selector: 'http-html-response',
     name: toPascalCase('http-html-response'),
@@ -45,7 +45,7 @@ const httpHtmlResponse = new ContextNode({
 httpGet.append(httpHtmlResponse);
 
 // LEVEL 3
-const htmlSelectAll = new ContextNode({
+const htmlSelectAll = new PlaybookContext({
     id: generateId('html-select-all'),
     selector: 'html-select-all',
     name: toPascalCase('html-select-all'),
@@ -55,7 +55,7 @@ const htmlSelectAll = new ContextNode({
 httpHtmlResponse.append(htmlSelectAll);
 
 // LEVEL 4
-const mongoDatasetInsert = new ContextNode({
+const mongoDatasetInsert = new PlaybookContext({
     id: generateId('mongo-dataset-insert-pipe'),
     selector: 'mongo-dataset-insert-pipe',
     name: toPascalCase('mongo-dataset-insert-pipe'),
@@ -65,7 +65,7 @@ const mongoDatasetInsert = new ContextNode({
 htmlSelectAll.append(mongoDatasetInsert);
 
 // LEVEL 5 — HTTP FETCH brand link
-const brandFetch = new ContextNode({
+const brandFetch = new PlaybookContext({
     id: generateId('http-fetch-link-action'),
     selector: 'http-fetch-link-action',
     name: toPascalCase('http-fetch-link-action'),
@@ -75,7 +75,7 @@ const brandFetch = new ContextNode({
 mongoDatasetInsert.append(brandFetch);
 
 // LEVEL 6
-const brandResponse = new ContextNode({
+const brandResponse = new PlaybookContext({
     id: generateId('http-html-response'),
     selector: 'http-html-response',
     name: toPascalCase('http-html-response'),
@@ -85,7 +85,7 @@ const brandResponse = new ContextNode({
 brandFetch.append(brandResponse);
 
 // LEVEL 7
-const brandSelectAll = new ContextNode({
+const brandSelectAll = new PlaybookContext({
     id: generateId('html-select-all'),
     selector: 'html-select-all',
     name: toPascalCase('html-select-all'),
@@ -95,7 +95,7 @@ const brandSelectAll = new ContextNode({
 brandResponse.append(brandSelectAll);
 
 // LEVEL 8 — HTTP FETCH model
-const modelFetch = new ContextNode({
+const modelFetch = new PlaybookContext({
     id: generateId('http-fetch-link-action'),
     selector: 'http-fetch-link-action',
     name: toPascalCase('http-fetch-link-action'),
@@ -105,7 +105,7 @@ const modelFetch = new ContextNode({
 brandSelectAll.append(modelFetch);
 
 // LEVEL 9 — model response
-const modelResponse = new ContextNode({
+const modelResponse = new PlaybookContext({
     id: generateId('http-html-response'),
     selector: 'http-html-response',
     name: toPascalCase('http-html-response'),
@@ -115,7 +115,7 @@ const modelResponse = new ContextNode({
 modelFetch.append(modelResponse);
 
 // LEVEL 10.1 — has child: version-details
-const versionDetails = new ContextNode({
+const versionDetails = new PlaybookContext({
     id: generateId('html-has-child'),
     selector: 'html-has-child',
     name: toPascalCase('html-has-child'),
@@ -125,7 +125,7 @@ const versionDetails = new ContextNode({
 modelResponse.append(versionDetails);
 
 // LEVEL 11.1 — map inside version-details
-const versionMap = new ContextNode({
+const versionMap = new PlaybookContext({
     id: generateId('map'),
     selector: 'map',
     name: toPascalCase('map'),
@@ -136,7 +136,7 @@ versionDetails.append(versionMap);
 
 // LEAVES: html-get-attribute and html-get-text-content (inside map)
 ['html-get-attribute', 'html-get-attribute', 'html-get-attribute', 'html-get-attribute', 'html-get-attribute', 'html-get-text-content', 'html-get-attribute', 'html-get-text-content'].forEach((sel) => {
-    const leaf = new ActionNode({
+    const leaf = new PlaybookAction({
         id: generateId(sel),
         selector: sel,
         name: toPascalCase(sel),
@@ -147,7 +147,7 @@ versionDetails.append(versionMap);
 });
 
 // LEVEL 10.2 — has-child: table.versions
-const tableVersions = new ContextNode({
+const tableVersions = new PlaybookContext({
     id: generateId('html-has-child'),
     selector: 'html-has-child',
     name: toPascalCase('html-has-child'),
@@ -157,7 +157,7 @@ const tableVersions = new ContextNode({
 modelResponse.append(tableVersions);
 
 // LEVEL 11.2 — html-select-all inside
-const selectAllVersions = new ContextNode({
+const selectAllVersions = new PlaybookContext({
     id: generateId('html-select-all'),
     selector: 'html-select-all',
     name: toPascalCase('html-select-all'),
@@ -167,7 +167,7 @@ const selectAllVersions = new ContextNode({
 tableVersions.append(selectAllVersions);
 
 // LEVEL 12 — http-fetch-link-action
-const fetchInsideTable = new ContextNode({
+const fetchInsideTable = new PlaybookContext({
     id: generateId('http-fetch-link-action'),
     selector: 'http-fetch-link-action',
     name: toPascalCase('http-fetch-link-action'),
@@ -177,7 +177,7 @@ const fetchInsideTable = new ContextNode({
 selectAllVersions.append(fetchInsideTable);
 
 // LEVEL 13 — response
-const responseInTable = new ContextNode({
+const responseInTable = new PlaybookContext({
     id: generateId('http-html-response'),
     selector: 'http-html-response',
     name: toPascalCase('http-html-response'),
@@ -187,7 +187,7 @@ const responseInTable = new ContextNode({
 fetchInsideTable.append(responseInTable);
 
 // LEVEL 14 — map
-const mapInTable = new ContextNode({
+const mapInTable = new PlaybookContext({
     id: generateId('map'),
     selector: 'map',
     name: toPascalCase('map'),
@@ -198,7 +198,7 @@ responseInTable.append(mapInTable);
 
 // LEAVES inside table map
 ['html-get-attribute', 'html-get-attribute', 'html-get-attribute', 'html-get-attribute', 'html-get-attribute', 'html-get-text-content'].forEach((sel) => {
-    const leaf = new ActionNode({
+    const leaf = new PlaybookAction({
         id: generateId(sel),
         selector: sel,
         name: toPascalCase(sel),
@@ -207,6 +207,6 @@ responseInTable.append(mapInTable);
     });
     mapInTable.append(leaf);
 });
-export function GET_ROOT_NODE(): ContextNode {
+export function GET_ROOT_NODE(): PlaybookContext {
     return mongoCreateDataset;
 }

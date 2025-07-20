@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { ActionNode, ContextNode } from '@/models/playbook/playbook-node';
-import { Playbook, PlaybookContextViewFlowNode, PlaybookViewFlowManager } from '@/service/playbook-vueflow-manager';
+import { PlaybookAction, PlaybookContext, PlaybookPipe } from '@/models/playbook/playbook-node';
+import { Playbook, PlaybookViewFlowManager } from '@/service/playbook-vueflow-manager';
 import { Controls } from '@vue-flow/controls';
 import { VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
 import { onMounted } from 'vue';
-import NodePlaceholder from './PlaceholderNode.vue';
+import NextPlaceholder from './NextPlaceholder.vue';
 import StarterNode from './StarterNode.vue';
 import Action from './action/Action.vue';
 import Context from './context/Context.vue';
@@ -15,61 +15,107 @@ const { playbook } = defineProps<{ playbook: Playbook }>();
 
 const playbookViewManager: PlaybookViewFlowManager = new PlaybookViewFlowManager(playbook, useVueFlow());
 
+function addPlaybookContextVueFlowNode(playbookContext: PlaybookContext, placeholder?: string): PlaybookContext {
+    addNodes({
+        id: playbookContext.id,
+        type: 'context',
+        parentNode: playbookContext.context?.id,
+        expandParent: !!playbookContext.context,
+        data: {
+            node: playbookContext,
+            placeholder: placeholder
+        },
+        position: { x: 0, y: 0 },
+        draggable: false,
+        selectable: true,
+        width: 380,
+        height: 140,
+        style: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignContent: 'center',
+            justifyContent: 'center',
+            alignItems: 'center',
+            justifyItems: 'center',
+            border: '1px solid #e0e0e0',
+            borderRadius: ' 2px',
+            backgroundColor: '#ffff',
+            margin: '0px',
+            padding: '0px',
+            zIndex: -1
+        }
+    });
+
+    return playbookContext;
+}
+
+function addPlaybookActionVueFlowNode(playbookAction: PlaybookAction, placeholder?: string): PlaybookAction {
+    addNodes({
+        id: playbookAction.id,
+        parentNode: playbookAction.context?.id,
+        expandParent: !!playbookAction.context,
+        width: 280,
+        position: { x: 0, y: 0 },
+        type: 'action',
+        draggable: true,
+        selectable: true,
+        data: {
+            node: playbookAction,
+            placeholder: placeholder
+        },
+        style: {
+            backgroundColor: '#ffff'
+        }
+    });
+
+    return playbookAction;
+}
+
+function addPlaybookPipeVueFlowNode(playbookPipe: PlaybookPipe, placeholder?: string): PlaybookPipe {
+    addNodes({
+        id: playbookPipe.id,
+        parentNode: playbookPipe.context?.id,
+        expandParent: !!playbookPipe.context,
+        width: 280,
+        position: { x: 0, y: 0 },
+        type: 'pipe',
+        data: {
+            node: playbookPipe,
+            placeholder: placeholder
+        },
+        style: {
+            backgroundColor: '#ffff'
+        }
+    });
+    return playbookPipe;
+}
+
 onMounted(() => {
-    playbookViewManager.draw();
-    const firstContext: PlaybookContextViewFlowNode = playbookViewManager.addNode(
-        new ContextNode({
+    const playbookContext: PlaybookContext = addPlaybookContextVueFlowNode(
+        new PlaybookContext({
             id: 'action-context',
             name: 'Simple Action',
             selector: 'selector',
             className: 'ActionContext',
             resolvedContext: true
         })
-    ) as PlaybookContextViewFlowNode;
-    firstContext.addNode(
-        new ActionNode({
-            id: 'child-action-context',
-            name: 'Simple Action',
-            selector: 'selector',
-            className: 'ActionContext'
-        })
-    );
-    playbookViewManager.addNode(
-        new ActionNode({
-            id: 'action',
-            name: 'Action with signle context',
-            selector: 'selector',
-            className: 'ActionContext'
-        })
-    );
-    playbookViewManager.addNode(
-        new ActionNode({
-            id: 'action-1',
-            name: 'Action 1 with signle context',
-            selector: 'selector',
-            className: 'ActionContext'
-        })
     );
 });
 
-/*
-function createStarterNode(): Node {
-    const screenCenter = { x: window.innerWidth / 2, y: 0 };
-    const graphCenter = project(screenCenter);
-    const START: Node = {
-        id: 'start',
-        type: 'start',
-        position: {
-            x: graphCenter.x, // center node of ~80px width
-            y: 10
-        },
-        draggable: false // Optional: lock it in place
-        //selectable: false // Optional: prevent selection
-    };
-
-    return START;
+function onNextRequested(placeholderId: string, context?: PlaybookContext, index?: number): void {
+    const next = new PlaybookAction({
+        id: Date.now().toString(),
+        name: 'Simple Action',
+        className: 'SimpleAction',
+        selector: 'action-selector'
+    });
+    if (context) {
+        context.append(next);
+    } else {
+        // add directly to playbook
+    }
+    addPlaybookActionVueFlowNode(next, placeholderId);
 }
-*/
 </script>
 
 <template>
@@ -88,18 +134,19 @@ function createStarterNode(): Node {
                 <MiniMap style="background-color: #ffffff" />
 
                 <Controls />
-                <template #node-placeholder>
-                    <NodePlaceholder></NodePlaceholder>
-                </template>
                 <template #node-start="nodeProps">
                     <StarterNode v-bind="nodeProps" />
                 </template>
+                <template #node-placeholder="nodeProps">
+                    <NextPlaceholder :context="nodeProps.data.context" :node="nodeProps.data.node" @on-next="onNextRequested"></NextPlaceholder>
+                </template>
+
                 <template #node-action="nodeProps">
-                    <Action :node="nodeProps.data" v-bind="nodeProps" />
+                    <Action :placeholder="nodeProps.data.placeholder" :node="nodeProps.data.node" v-bind="nodeProps" />
                 </template>
 
                 <template #node-context="nodeProps">
-                    <Context :node="nodeProps.data" v-bind="nodeProps" />
+                    <Context :placeholder="nodeProps.data.placeholder" :node="nodeProps.data.node" v-bind="nodeProps" />
                 </template>
 
                 <template #node-context-head="nodeProps">
