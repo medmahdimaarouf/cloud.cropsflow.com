@@ -1,74 +1,29 @@
 <script lang="ts" setup>
 import { PlaybookContext } from '@/models/playbook';
-import { Dimensions, Handle, Node, Position, useNode, useVueFlow } from '@vue-flow/core';
+import { Dimensions, GraphNode, Handle, Node, Position, useNode, useVueFlow, XYPosition } from '@vue-flow/core';
 import { defineProps, onMounted, reactive, watch } from 'vue';
 
-const { addNodes, updateNode, addEdges, onEdgesChange, updateNodeDimensions } = useVueFlow();
-const props = defineProps<{ node: PlaybookContext; placeholder: String }>();
-
+const { updateNode, addNodes, addEdges } = useVueFlow();
+const props = defineProps<{ node: PlaybookContext; previousNode: string }>();
+const { node: previousNode } = useNode(props.previousNode);
 const { node: vueFlowNode } = reactive(useNode());
 const playbookContext: PlaybookContext = reactive<PlaybookContext>(props.node);
-const after: String = reactive<String>(props.placeholder);
+let FLOW_START_NODE: Node;
+function getAbsolutePosition(node: GraphNode | undefined): XYPosition {
+    let x = 0;
+    let y = 0;
+    let current = node;
 
-function drawHeadNode(): void {
-    addNodes({
-        id: `${playbookContext.id}-head`,
-        parentNode: playbookContext.id,
-        type: 'context-head',
-        position: {
-            x: 0,
-            y: 0
-        },
-        data: playbookContext,
-        draggable: false,
-        selectable: false,
-        expandParent: true,
-        width: vueFlowNode.dimensions.width,
-        height: 60,
-        style: {
-            display: 'flex',
-            alignContent: 'center',
-            flex: '1',
-            flexGrow: 1,
-            padding: '8px',
-            marginRight: '8px',
-            backgroundColor: '#ffff',
-            borderRadius: '2px',
-            border: '1px solid #e0e0e0'
-        }
-    });
-}
-function drawHeadNextPlaceholderNode() {
-    const actualDimensions: Dimensions = vueFlowNode.dimensions;
-    const NEXT_PLACEHOLDER: Node = {
-        id: `${playbookContext.id}|head-next-placeholder`,
-        type: 'placeholder',
-        position: {
-            x: actualDimensions.width / 2 - 10,
-            y: 70
-        },
-        data: {
-            node: playbookContext,
-            context: playbookContext
-        },
-        parentNode: `${playbookContext.id}`,
-        expandParent: true,
-        draggable: false,
-        selectable: false
-    };
-    addNodes(NEXT_PLACEHOLDER);
-    addEdges([
-        {
-            id: `${playbookContext.id}|${NEXT_PLACEHOLDER.id}`,
-            source: `${playbookContext.id}-head`,
-            target: NEXT_PLACEHOLDER.id,
-            sourceHandle: `${playbookContext.id}-next`,
-            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`
-        }
-    ]);
+    while (current) {
+        x += current.position.x;
+        y += current.position.y;
+        if (!current.parentNode) break;
+        current = useNode(current.parentNode).node;
+    }
 
-    return NEXT_PLACEHOLDER;
+    return { x, y };
 }
+
 function drawNextPlaceholderNode(): Node {
     const actualDimensions: Dimensions = vueFlowNode.dimensions;
     const NEXT_PLACEHOLDER: Node = {
@@ -84,7 +39,8 @@ function drawNextPlaceholderNode(): Node {
         },
         parentNode: vueFlowNode.id,
         draggable: false,
-        selectable: false
+        selectable: false,
+        expandParent: false
     };
     addNodes([NEXT_PLACEHOLDER]);
     addEdges([
@@ -99,65 +55,91 @@ function drawNextPlaceholderNode(): Node {
 
     return NEXT_PLACEHOLDER;
 }
+function updatePositon() {
+    const previousNodeDimensions: Dimensions = previousNode.dimensions;
+    //const previousNodePositon: XYPosition = vueFlowNode.parentNode ? vueFlowNode.position : getAbsolutePosition(previousNode);
 
-function fitHeadSize(): void {
-    const head = useNode(`${playbookContext.id}-head`);
-    const nextPlaceHolder = useNode(`${playbookContext.id}|next-placeholder`);
-    watch(
-        () => vueFlowNode.dimensions,
-        async (dimensions) => {
-            if (dimensions.width > 0 && dimensions.height > 0) {
-                updateNode(nextPlaceHolder.id, {
-                    position: {
-                        x: vueFlowNode.dimensions.width / 2 - 10,
-                        y: vueFlowNode.dimensions.height + 10
-                    }
-                });
-                updateNode(head.id, {
-                    style: {
-                        display: 'flex',
-                        alignContent: 'center',
-                        flex: '1',
-                        flexGrow: 1,
-                        padding: '8px',
-                        marginRight: '8px',
-                        backgroundColor: '#ffff',
-                        borderRadius: '2px',
-                        border: '1px solid #e0e0e0',
-                        width: dimensions.width + 'px'
-                    }
-                });
-            }
-        },
-        { immediate: true, deep: true }
-    );
+    const previousNodePositon: XYPosition = getAbsolutePosition(previousNode);
+    const currentNodeDimensions: Dimensions = {
+        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
+        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
+    };
+    let x = previousNodePositon.x;
+    x += previousNodeDimensions.width / 2;
+    x -= currentNodeDimensions.width / 2;
+    updateNode(vueFlowNode.id, {
+        position: {
+            x: x,
+            y: previousNodePositon.y + previousNodeDimensions.height + 30
+        }
+    });
 }
 
-function fix_head_placeholder() {
-    const head = useNode(`${playbookContext.id}-head`);
+function drawChildNextPlaceholder(): Node {
+    const currentNodeDimensions: Dimensions = {
+        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
+        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
+    };
+    FLOW_START_NODE = {
+        id: `${vueFlowNode.id}-child-placeholder`,
+        type: 'placeholder',
+        parentNode: vueFlowNode.id,
+        position: {
+            x: currentNodeDimensions.width / 2 - 10,
+            y: 60
+        },
+        data: {
+            node: playbookContext,
+            context: playbookContext
+        }
+    };
+
+    addNodes(FLOW_START_NODE);
+
+    return FLOW_START_NODE;
+}
+function fixPlaceholdersPositons() {
     watch(
-        () => head.node.dimensions,
+        () => vueFlowNode.dimensions,
         (dimensions) => {
-            updateNode(`${playbookContext.id}|head-next-placeholder`, {
+            console.log(dimensions);
+            updateNode(`${playbookContext.id}|next-placeholder`, {
                 position: {
                     x: dimensions.width / 2 - 10,
-                    y: 80
+                    y: dimensions.height + 20
+                }
+            });
+
+            updateNode(`${vueFlowNode.id}-child-placeholder`, {
+                position: {
+                    x: dimensions.width / 2 - 10,
+                    y: 60
                 }
             });
         }
     );
 }
+onMounted(() => {
+    updatePositon();
+    setTimeout(() => {
+        drawNextPlaceholderNode();
+    }, 0);
 
-onMounted(async () => {
-    drawHeadNode();
-    drawHeadNextPlaceholderNode();
-    drawNextPlaceholderNode();
-    fitHeadSize();
-    fix_head_placeholder();
+    drawChildNextPlaceholder();
+    fixPlaceholdersPositons();
 });
 </script>
 
 <template>
+    <div class="context-head flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
+        <Avatar icon="pi pi-sitemap" size="large" />
+        <div>
+            <span class="text-xl font-bold m-0">{{ $props.node.name }}</span>
+            <p>Context Name</p>
+        </div>
+    </div>
+    <slot></slot>
+    <!--<Button class="placeholder-button" icon="pi pi-plus-circle" size="samll" severity="contrast" variant="text" raised rounded />-->
     <Handle
         :id="'previous'"
         :type="'target'"
@@ -204,5 +186,10 @@ onMounted(async () => {
     align-items: center;
     align-content: center;
     gap: 4px;
+}
+
+.context-head {
+    max-height: 50px;
+    border-bottom: 1px solid #e0e0e0;
 }
 </style>

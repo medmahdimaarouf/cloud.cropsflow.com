@@ -1,121 +1,164 @@
 <script lang="ts" setup>
-import { PlaybookAction, PlaybookContext, PlaybookPipe } from '@/models/playbook/playbook-node';
-import { Playbook, PlaybookViewFlowManager } from '@/service/playbook-vueflow-manager';
+import { PlaybookAction, PlaybookContext, PlaybookNode, PlaybookPipe } from '@/models/playbook/playbook-node';
 import { Controls } from '@vue-flow/controls';
-import { VueFlow, useVueFlow } from '@vue-flow/core';
+import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
-import { onMounted } from 'vue';
-import NextPlaceholder from './NextPlaceholder.vue';
-import StarterNode from './StarterNode.vue';
+import { onMounted, reactive } from 'vue';
 import Action from './action/Action.vue';
 import Context from './context/Context.vue';
 import ContextHead from './context/ContextHead.vue';
-const { onConnect, addEdges, setViewport, project, getEdges, addNodes } = useVueFlow();
-const { playbook } = defineProps<{ playbook: Playbook }>();
+import CustomEdge from './CustomEdge.vue';
+import EndNode from './EndNode.vue';
+import FlowMenu from './FlowMenu.vue';
+import NextPlaceholder from './NextPlaceholder.vue';
+import StarterNode from './StarterNode.vue';
 
-const playbookViewManager: PlaybookViewFlowManager = new PlaybookViewFlowManager(playbook, useVueFlow());
+const { onConnect, addEdges, setViewport, project, addNodes, viewport, dimensions } = useVueFlow();
+const props = defineProps<{ context: PlaybookContext }>();
+const context: PlaybookContext = reactive(props.context);
 
-function addPlaybookContextVueFlowNode(playbookContext: PlaybookContext, placeholder?: string): PlaybookContext {
-    addNodes({
-        id: playbookContext.id,
+let FLOW_START_NODE: Node;
+let FLOW_END_NODE: Node;
+
+function addPlaybookContextVueFlowNode(child: PlaybookContext, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string): Node {
+    const previousNodeId: string = (typeof previous == 'string' ? previous : previous?.id) || FLOW_START_NODE.id;
+    const nextId: string = (typeof next == 'string' ? next : next?.id) || FLOW_START_NODE.id;
+    const CONTEXT_NODE: Node = {
+        id: child.id,
         type: 'context',
-        parentNode: playbookContext.context?.id,
-        expandParent: !!playbookContext.context,
-        data: {
-            node: playbookContext,
-            placeholder: placeholder
-        },
+        parentNode: childContext?.id,
+        expandParent: !!childContext,
         position: { x: 0, y: 0 },
-        draggable: false,
+        data: {
+            node: child,
+            previousNode: previousNodeId
+        },
+        draggable: true,
         selectable: true,
         width: 380,
         height: 140,
         style: {
             display: 'flex',
             flexDirection: 'column',
-            alignContent: 'center',
-            justifyContent: 'center',
-            alignItems: 'center',
-            justifyItems: 'center',
             border: '1px solid #e0e0e0',
             borderRadius: ' 2px',
             backgroundColor: '#ffff',
             margin: '0px',
-            padding: '0px',
             zIndex: -1
         }
+    };
+    addNodes(CONTEXT_NODE);
+    addEdges({
+        id: `${child.id}-previous`,
+        type: 'custom',
+        source: previousNodeId,
+        target: child.id
     });
-
-    return playbookContext;
+    return CONTEXT_NODE;
 }
 
-function addPlaybookActionVueFlowNode(playbookAction: PlaybookAction, placeholder?: string): PlaybookAction {
-    addNodes({
-        id: playbookAction.id,
-        parentNode: playbookAction.context?.id,
-        expandParent: !!playbookAction.context,
+function addPlaybookActionVueFlowNode(child: PlaybookAction, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string): PlaybookAction {
+    const previousNodeId: string = (typeof previous == 'string' ? previous : previous?.id) || FLOW_START_NODE.id;
+    const nextId: string = (typeof next == 'string' ? next : next?.id) || FLOW_START_NODE.id;
+
+    const ACTION_NODE: Node = {
+        id: child.id,
         width: 280,
         position: { x: 0, y: 0 },
         type: 'action',
         draggable: true,
         selectable: true,
         data: {
-            node: playbookAction,
-            placeholder: placeholder
-        },
-        style: {
-            backgroundColor: '#ffff'
+            node: child,
+            previousNode: previousNodeId
         }
+    };
+
+    addNodes(ACTION_NODE);
+    addEdges({
+        id: `${child.id}-previous`,
+        type: 'custom',
+        source: previousNodeId,
+        target: child.id
     });
 
-    return playbookAction;
+    return child;
 }
 
-function addPlaybookPipeVueFlowNode(playbookPipe: PlaybookPipe, placeholder?: string): PlaybookPipe {
+function addPlaybookPipeVueFlowNode(child: PlaybookPipe, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string): PlaybookPipe {
     addNodes({
-        id: playbookPipe.id,
-        parentNode: playbookPipe.context?.id,
-        expandParent: !!playbookPipe.context,
+        id: child.id,
+        parentNode: child.context?.id,
+        expandParent: !!child.context,
         width: 280,
         position: { x: 0, y: 0 },
         type: 'pipe',
         data: {
-            node: playbookPipe,
-            placeholder: placeholder
+            node: child,
+            previousNode: previous
         },
         style: {
             backgroundColor: '#ffff'
         }
     });
-    return playbookPipe;
+    return child;
+}
+
+function addChildNode(child: PlaybookNode, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string) {
+    if (child instanceof PlaybookContext) addPlaybookContextVueFlowNode(child, childContext, previous, next);
+    if (child instanceof PlaybookAction) addPlaybookActionVueFlowNode(child, childContext, previous, next);
+    if (child instanceof PlaybookPipe) addPlaybookPipeVueFlowNode(child, childContext, previous, next);
+}
+function onNextRequested(previousNode: string, childContext?: PlaybookContext, index?: number): void {
+    const next = new PlaybookContext(
+        {
+            id: Date.now().toString(),
+            name: 'Simple Action',
+            className: 'SimpleAction',
+            selector: 'action-selector'
+        },
+        childContext
+    );
+    if (childContext) context.append(childContext);
+    else context.append(next);
+    addChildNode(next, childContext, previousNode);
+}
+function createFirst() {
+    onNextRequested(FLOW_START_NODE.id);
+}
+function initVueFlow(): void {
+    FLOW_START_NODE = {
+        id: 'start',
+        type: 'start',
+        data: {},
+        draggable: false,
+        selectable: false,
+        width: 38,
+        position: {
+            x: dimensions.value.width / 2 - viewport.value.x / viewport.value.zoom - 19,
+            y: 10
+        }
+    };
+
+    FLOW_END_NODE = {
+        id: 'end',
+        type: 'end',
+        data: {},
+        draggable: true,
+        selectable: false,
+        width: 38,
+        position: {
+            x: dimensions.value.width / 2 - viewport.value.x / viewport.value.zoom - 19,
+            y: dimensions.value.height - 50
+        }
+    };
+
+    addNodes([FLOW_START_NODE]);
 }
 
 onMounted(() => {
-    const playbookContext: PlaybookContext = addPlaybookContextVueFlowNode(
-        new PlaybookContext({
-            id: 'action-context',
-            name: 'Simple Action',
-            selector: 'selector',
-            className: 'ActionContext',
-            resolvedContext: true
-        })
-    );
+    initVueFlow();
 });
-
-function onNextRequested(placeholderId: string, context?: PlaybookContext, index?: number): void {
-    const next = new PlaybookAction({
-        id: Date.now().toString(),
-        name: 'Simple Action',
-        className: 'SimpleAction',
-        selector: 'action-selector'
-    });
-    if (context) {
-        context.append(next);
-    } else {
-        // add directly to playbook
-    }
-    addPlaybookActionVueFlowNode(next, placeholderId);
-}
 </script>
 
 <template>
@@ -123,13 +166,17 @@ function onNextRequested(placeholderId: string, context?: PlaybookContext, index
         <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
             <Avatar icon="pi pi-sitemap" size="large" />
             <div>
-                <span>Playbook name</span>
-                <p>Main Context</p>
+                <span class="text-xl font-bold m-0">{{ context.name }}</span>
+                <p>{{ context.className }}</p>
             </div>
         </div>
         <div class="flow">
+            <div v-if="!context.children.length" style="width: 100%; top: 80px; display: flex; align-content: center; align-items: center; justify-content: center; justify-items: center; height: 120px; z-index: 1000; position: absolute">
+                <Button @click="createFirst" class="bg-white" icon="pi pi-plus-circle" size="large" label="Click to add first step" :severity="'secondary'" outlined raised></Button>
+            </div>
             <VueFlow :default-zoom="40" :default-position="[0, 0]" :fit-view-on-init="false" :default-edge-options="{ type: 'step' }" :max-zoom="40" :min-zoom="-40">
                 <!--<Background pattern-color="#aaa" :gap="4" />-->
+                <FlowMenu></FlowMenu>
 
                 <MiniMap style="background-color: #ffffff" />
 
@@ -137,18 +184,24 @@ function onNextRequested(placeholderId: string, context?: PlaybookContext, index
                 <template #node-start="nodeProps">
                     <StarterNode v-bind="nodeProps" />
                 </template>
+                <template #node-end="nodeProps">
+                    <EndNode v-bind="nodeProps" />
+                </template>
+
                 <template #node-placeholder="nodeProps">
                     <NextPlaceholder :context="nodeProps.data.context" :node="nodeProps.data.node" @on-next="onNextRequested"></NextPlaceholder>
                 </template>
 
                 <template #node-action="nodeProps">
-                    <Action :placeholder="nodeProps.data.placeholder" :node="nodeProps.data.node" v-bind="nodeProps" />
+                    <Action :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" v-bind="nodeProps" />
                 </template>
 
                 <template #node-context="nodeProps">
-                    <Context :placeholder="nodeProps.data.placeholder" :node="nodeProps.data.node" v-bind="nodeProps" />
+                    <Context :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" v-bind="nodeProps" />
                 </template>
-
+                <template #edge-custom="edgeProps">
+                    <CustomEdge v-bind="edgeProps"></CustomEdge>
+                </template>
                 <template #node-context-head="nodeProps">
                     <ContextHead :node="nodeProps.data" v-bind="nodeProps" />
                 </template>
@@ -159,6 +212,7 @@ function onNextRequested(placeholderId: string, context?: PlaybookContext, index
 <style lang="scss" scoped>
 /*   DO NOT TOUCH   */
 .playbook-flow {
+    position: relative;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -169,8 +223,8 @@ function onNextRequested(placeholderId: string, context?: PlaybookContext, index
         border-bottom: 1px solid rgba(170, 170, 170, 0.37);
     }
     .flow {
-        display: block;
         position: relative;
+        background-color: red;
         flex: 1;
         height: 100%;
         width: 100%;

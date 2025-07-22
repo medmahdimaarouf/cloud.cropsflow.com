@@ -5,12 +5,11 @@ import Button from 'primevue/button';
 import { onMounted } from 'vue';
 
 const { onNodesChange, updateNode } = useVueFlow();
+
 const { node: flowNode } = useNode();
 const { node: playbookNode, context } = defineProps<{ node: PlaybookNode; context?: PlaybookContext }>();
 
-const emit = defineEmits<{
-    (e: 'on-next', placeholderId: string, context?: PlaybookContext, index?: number): void;
-}>();
+const emit = defineEmits<{ (e: 'on-next', placeholderId: string, childContext?: PlaybookContext, index?: number): void }>();
 
 function getChildIndex(): number | undefined {
     return context?.children.indexOf(playbookNode);
@@ -24,8 +23,8 @@ onMounted(() => {});
 </script>
 
 <template>
-    <Handle :id="flowNode.id + '-previous'" :type="'target'" :position="Position.Top" />
     <Handle :id="flowNode.id + '-next'" :type="'target'" :position="Position.Top" />
+    <Handle id="attach" type="source" :position="Position.Bottom" :connectable="true" />
     <Button class="placeholder-button" icon="pi pi-plus-circle" size="samll" severity="contrast" variant="text" @click="onNextRequested" raised rounded />
 </template>
 
