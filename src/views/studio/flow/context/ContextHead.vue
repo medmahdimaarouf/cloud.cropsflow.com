@@ -1,14 +1,13 @@
 <script lang="ts" setup>
-import { ContextNode } from '@/models/playbook';
+import { PlaybookContext } from '@/models/playbook';
 import { Handle, Position, useNode, useVueFlow } from '@vue-flow/core';
 import { defineProps, onMounted } from 'vue';
 
 const { addNodes } = useVueFlow();
-const { node } = useNode();
-const props = defineProps<{ node: ContextNode }>();
-const emit = defineEmits<{
-    (e: 'updateNodeInternals'): void;
-}>();
+
+const { node: flowNode } = useNode();
+const { node: playbookContext } = defineProps<{ node: PlaybookContext }>();
+
 onMounted(() => {});
 </script>
 

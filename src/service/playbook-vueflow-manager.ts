@@ -1,4 +1,4 @@
-import { ActionNode, ContextNode, PipeNode, PlaybookNode } from '@/models';
+import { PlaybookAction, PlaybookContext, PlaybookNode, PlaybookPipe } from '@/models';
 import { Dimensions, Edge, GraphNode, Node, useNode, VueFlowStore, XYPosition } from '@vue-flow/core';
 
 abstract class ViewFlowNode<T extends PlaybookNode = any> {
@@ -98,9 +98,9 @@ abstract class ViewFlowNode<T extends PlaybookNode = any> {
         this.vueFlowStore.removeEdges([`${this.id}|${next_placeholder_node_id}`]);
     }
 }
-export class PlaybookContextViewFlowNode extends ViewFlowNode<ContextNode> {
+export class PlaybookContextViewFlowNode extends ViewFlowNode<PlaybookContext> {
     children: Array<ViewFlowNode<any>> = new Array();
-    public static getInstance(node: ContextNode, vueFlow: VueFlowStore, parent?: ViewFlowNode<any>): PlaybookContextViewFlowNode {
+    public static getInstance(node: PlaybookContext, vueFlow: VueFlowStore, parent?: ViewFlowNode<any>): PlaybookContextViewFlowNode {
         return new PlaybookContextViewFlowNode(node, vueFlow, parent);
     }
 
@@ -218,8 +218,8 @@ export class PlaybookContextViewFlowNode extends ViewFlowNode<ContextNode> {
     }
 }
 
-export class PlaybookActionViewFlowNode extends ViewFlowNode<ActionNode> {
-    public static getInstance(node: ActionNode, vueFlow: VueFlowStore, parent?: ViewFlowNode<any>): PlaybookActionViewFlowNode {
+export class PlaybookActionViewFlowNode extends ViewFlowNode<PlaybookAction> {
+    public static getInstance(node: PlaybookAction, vueFlow: VueFlowStore, parent?: ViewFlowNode<any>): PlaybookActionViewFlowNode {
         return new PlaybookActionViewFlowNode(node, vueFlow, parent);
     }
 
@@ -254,7 +254,7 @@ export class PlaybookActionViewFlowNode extends ViewFlowNode<ActionNode> {
     }
 }
 
-export class PlaybookPipeViewFlowNode extends ViewFlowNode<PipeNode> {
+export class PlaybookPipeViewFlowNode extends ViewFlowNode<PlaybookPipe> {
     public setNext(next: ViewFlowNode): Edge {
         throw new Error('Method not implemented.');
     }
@@ -267,7 +267,7 @@ export class PlaybookPipeViewFlowNode extends ViewFlowNode<PipeNode> {
     public undraw(): Node {
         throw new Error('Method not implemented.');
     }
-    public static getInstance(node: PipeNode, vueFlow: VueFlowStore, parent?: ViewFlowNode<any>): PlaybookPipeViewFlowNode {
+    public static getInstance(node: PlaybookPipe, vueFlow: VueFlowStore, parent?: ViewFlowNode<any>): PlaybookPipeViewFlowNode {
         return new PlaybookPipeViewFlowNode(node, vueFlow, parent);
     }
 }
@@ -297,11 +297,11 @@ export class PlaybookViewFlowManager {
     ) {}
 
     public static createNode(node: PlaybookNode, vueFlowStore: VueFlowStore, parent?: ViewFlowNode<any>): ViewFlowNode<any> {
-        if (node instanceof ContextNode) {
+        if (node instanceof PlaybookContext) {
             return PlaybookContextViewFlowNode.getInstance(node, vueFlowStore, parent);
-        } else if (node instanceof ActionNode) {
+        } else if (node instanceof PlaybookAction) {
             return PlaybookActionViewFlowNode.getInstance(node, vueFlowStore, parent);
-        } else if (node instanceof PipeNode) {
+        } else if (node instanceof PlaybookPipe) {
             return PlaybookPipeViewFlowNode.getInstance(node, vueFlowStore, parent);
         } else throw Error('Unknown node type ');
     }

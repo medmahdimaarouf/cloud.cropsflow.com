@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { PlaybookContext } from '@/models';
 import { Playbook } from '@/service/playbook-manager.service';
 import '@vue-flow/core/dist/style.css';
 import Button from 'primevue/button';
@@ -9,7 +10,14 @@ const id = route.params.id as string;
 
 const playbook: Playbook = new Playbook({
     id: Date.now().toString(),
-    title: 'Play book view'
+    title: 'Play book view',
+    context: new PlaybookContext({
+        name: 'Ai ChatGPT4',
+        resolvedContext: false,
+        id: Date.now().toString(),
+        selector: 'playbook',
+        className: 'package.module.class'
+    })
 });
 </script>
 
@@ -55,7 +63,7 @@ const playbook: Playbook = new Playbook({
             <div class="studio-panel left"></div>
 
             <div class="studio-flow">
-                <PlaybookFlow :playbook="playbook" />
+                <PlaybookFlow :context="playbook.context" />
             </div>
 
             <div class="studio-panel right"></div>
@@ -81,7 +89,7 @@ const playbook: Playbook = new Playbook({
     flex-grow: 1;
     overflow: hidden;
     width: 100%;
-    height: calc(100vh - 4rem);
+    height: calc(100vh - 3rem);
 
     .studio-toolbar.top {
         width: 100%;

@@ -1,72 +1,45 @@
-import { ActionNode, ContextNode, PipeNode, PlaybookNode } from '@/models';
-import { Node, VueFlowStore } from '@vue-flow/core';
+import { PlaybookContext, PlaybookNode } from '@/models';
+import { VueFlowStore } from '@vue-flow/core';
 
 export interface IPlaybook {
     id: string;
     title: string;
     icon?: string;
+    context: PlaybookContext;
 }
 
 export class Playbook implements IPlaybook {
     id: string;
     title: string;
     icon?: string;
+    context: PlaybookContext;
     constructor(data: IPlaybook) {
         this.id = data.id;
         this.title = data.title;
         this.icon = data.icon;
+        this.context = data.context;
     }
 }
 export class PlaybookViewManager {
-    private nodes: Array<PlaybookNode> = [];
+    private children: Array<PlaybookNode> = [];
     constructor(
         private readonly playbook: Playbook,
         private vueflow: VueFlowStore
     ) {}
 
-    addNode(node: PlaybookNode) {
-        if (node instanceof ContextNode) {
-            this.addContextNode(node);
-        }
-
-        if (node instanceof ActionNode) {
-        }
-
-        if (node instanceof PipeNode) {
-        }
+    addChild(child: PlaybookNode) {
+        this.children.push(child);
     }
 
-    private addContextNode(node: ContextNode) {
-        const ACTION_CONTEXT_NODE: Node = {
-            id: node.id,
-            type: 'context',
-            position: {
-                x: 50,
-                y: 120
-            },
-            data: node,
-            draggable: false,
-            selectable: true,
-            height: 180,
-            width: 380,
-            style: {
-                display: 'flex',
-                flexDirection: 'column',
-                alignContent: 'center',
-                justifyContent: 'center',
-                alignItems: 'center',
-                justifyItems: 'center',
-                border: '1px solid #e0e0e0',
-                borderRadius: ' 2px',
-                backgroundColor: '#ffff',
-                margin: '0px',
-                padding: '0px',
-                zIndex: -1
-            }
-        };
-        this.vueflow.addNodes([ACTION_CONTEXT_NODE]);
-        this.nodes.push(node);
+    getChild(index: number): PlaybookNode | undefined {
+        return this.children.at(index);
     }
 
-    private addPipeNode(node: PipeNode) {}
+    getLastChild(): PlaybookNode | undefined {
+        return this.children.at(this.children.length - 1);
+    }
+
+    getFirstChild(): PlaybookNode | undefined {
+        return this.children.at(0);
+    }
 }

@@ -1,13 +1,11 @@
 <script lang="ts" setup>
-import { ActionNode } from '@/models/playbook';
+import { PlaybookPipe } from '@/models/playbook';
 import { Handle, Position } from '@vue-flow/core';
-import { defineProps, onMounted } from 'vue';
+import { defineProps, onMounted, reactive } from 'vue';
 
-const props = defineProps<{
-    node: ActionNode;
-    selected: boolean;
-}>();
-
+const props = defineProps<{ node: PlaybookPipe; placeholder: string }>();
+const playbookPipe: PlaybookPipe = reactive(props.node);
+const after: String = reactive<String>(props.placeholder);
 onMounted(() => {});
 </script>
 

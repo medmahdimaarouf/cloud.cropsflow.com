@@ -1,89 +1,145 @@
 <script lang="ts" setup>
-import { ContextNode } from '@/models/playbook';
-import { Handle, Node, Position, useNode, useVueFlow } from '@vue-flow/core';
-import Button from 'primevue/button';
-import { defineProps, onMounted, watch } from 'vue';
+import { PlaybookContext } from '@/models/playbook';
+import { Dimensions, GraphNode, Handle, Node, Position, useNode, useVueFlow, XYPosition } from '@vue-flow/core';
+import { defineProps, onMounted, reactive, watch } from 'vue';
 
-const props = defineProps<{ node: ContextNode }>();
-const { addNodes, updateNode, addEdges, updateNodeDimensions } = useVueFlow();
-const { node } = useNode();
+const { updateNode, addNodes, addEdges } = useVueFlow();
+const props = defineProps<{ node: PlaybookContext; previousNode: string }>();
+const { node: previousNode } = useNode(props.previousNode);
+const { node: vueFlowNode } = reactive(useNode());
+const playbookContext: PlaybookContext = reactive<PlaybookContext>(props.node);
+let FLOW_START_NODE: Node;
+function getAbsolutePosition(node: GraphNode | undefined): XYPosition {
+    let x = 0;
+    let y = 0;
+    let current = node;
 
-function addPlaceholder(previousId?: string, nextId?: string) {
-    //const { node: previous } = useNode(previousId);
-    //const { node: next } = useNode(nextId);
-    const PLACE_HOLDER: Node = {
-        id: 'placeholder', //`${previous.id}|${next.id}`,
+    while (current) {
+        x += current.position.x;
+        y += current.position.y;
+        if (!current.parentNode) break;
+        current = useNode(current.parentNode).node;
+    }
+
+    return { x, y };
+}
+
+function drawNextPlaceholderNode(): Node {
+    const actualDimensions: Dimensions = vueFlowNode.dimensions;
+    const NEXT_PLACEHOLDER: Node = {
+        id: `${playbookContext.id}|next-placeholder`,
         type: 'placeholder',
-        parentNode: props.node.id,
         position: {
-            x: node.dimensions.width / 2 - 12.5,
-            y: 120
+            x: actualDimensions.width / 2 - 10,
+            y: actualDimensions.height + 20
         },
+        data: {
+            node: playbookContext,
+            context: playbookContext.context
+        },
+        parentNode: vueFlowNode.id,
         draggable: false,
         selectable: false,
-        expandParent: true
+        expandParent: false
     };
+    addNodes([NEXT_PLACEHOLDER]);
+    addEdges([
+        {
+            id: `${playbookContext.id}|${NEXT_PLACEHOLDER.id}`,
+            source: playbookContext.id,
+            target: NEXT_PLACEHOLDER.id,
+            sourceHandle: `${playbookContext.id}-next`,
+            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`
+        }
+    ]);
 
-    addNodes([PLACE_HOLDER]);
+    return NEXT_PLACEHOLDER;
+}
+function updatePositon() {
+    const previousNodeDimensions: Dimensions = previousNode.dimensions;
+    //const previousNodePositon: XYPosition = vueFlowNode.parentNode ? vueFlowNode.position : getAbsolutePosition(previousNode);
 
-    return PLACE_HOLDER;
+    const previousNodePositon: XYPosition = getAbsolutePosition(previousNode);
+    const currentNodeDimensions: Dimensions = {
+        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
+        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
+    };
+    let x = previousNodePositon.x;
+    x += previousNodeDimensions.width / 2;
+    x -= currentNodeDimensions.width / 2;
+    updateNode(vueFlowNode.id, {
+        position: {
+            x: x,
+            y: previousNodePositon.y + previousNodeDimensions.height + 30
+        }
+    });
 }
 
-function addEdge(from: Node, to: Node, type?: string) {
-    const edge = {
-        id: `my-fucking-edge`,
-        source: from.id,
-        sourceHandle: 'context-head-next', // using the handle from ContextHead
-        target: to.id,
-        targetHandle: 'placeholder-previous', // using the handle from Placeholder
-        type: type || 'smoothstep',
-        style: { stroke: '#1976d2', strokeWidth: 2 }
+function drawChildNextPlaceholder(): Node {
+    const currentNodeDimensions: Dimensions = {
+        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
+        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
     };
-
-    addEdges([edge]);
-    return edge;
-}
-
-onMounted(async () => {
-    const head = useNode(`${node.id}-head`);
-    const nextPlaceHolder = useNode(`${node.id}|next-placeholder`);
-    watch(
-        () => node.dimensions,
-        async (dimensions) => {
-            if (dimensions.width > 0 && dimensions.height > 0) {
-                updateNode(nextPlaceHolder.id, {
-                    position: {
-                        x: node.dimensions.width / 2 - 10,
-                        y: node.dimensions.height + 10
-                    }
-                });
-                updateNode(head.id, {
-                    style: {
-                        width: `${dimensions.width}px`,
-                        height: '60px',
-                        display: 'flex',
-                        alignContent: 'center',
-                        flex: '1',
-                        flexGrow: 1,
-                        padding: '8px',
-                        marginRight: '8px',
-                        backgroundColor: '#ffff',
-                        borderRadius: '2px',
-                        border: '1px solid #e0e0e0'
-                    }
-                });
-            }
+    FLOW_START_NODE = {
+        id: `${vueFlowNode.id}-child-placeholder`,
+        type: 'placeholder',
+        parentNode: vueFlowNode.id,
+        position: {
+            x: currentNodeDimensions.width / 2 - 10,
+            y: 60
         },
-        { immediate: true, deep: true }
+        data: {
+            node: playbookContext,
+            context: playbookContext
+        }
+    };
+
+    addNodes(FLOW_START_NODE);
+
+    return FLOW_START_NODE;
+}
+function fixPlaceholdersPositons() {
+    watch(
+        () => vueFlowNode.dimensions,
+        (dimensions) => {
+            console.log(dimensions);
+            updateNode(`${playbookContext.id}|next-placeholder`, {
+                position: {
+                    x: dimensions.width / 2 - 10,
+                    y: dimensions.height + 20
+                }
+            });
+
+            updateNode(`${vueFlowNode.id}-child-placeholder`, {
+                position: {
+                    x: dimensions.width / 2 - 10,
+                    y: 60
+                }
+            });
+        }
     );
+}
+onMounted(() => {
+    updatePositon();
+    setTimeout(() => {
+        drawNextPlaceholderNode();
+    }, 0);
+
+    drawChildNextPlaceholder();
+    fixPlaceholdersPositons();
 });
 </script>
 
 <template>
-    <div v-if="!node.data.resolvedContext" class="context-resolve">
-        <Button icon="pi pi-plus-circle" label="Add node" severity="contrast" variant="text" raised />
+    <div class="context-head flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
+        <Avatar icon="pi pi-sitemap" size="large" />
+        <div>
+            <span class="text-xl font-bold m-0">{{ $props.node.name }}</span>
+            <p>Context Name</p>
+        </div>
     </div>
-
+    <slot></slot>
+    <!--<Button class="placeholder-button" icon="pi pi-plus-circle" size="samll" severity="contrast" variant="text" raised rounded />-->
     <Handle
         :id="'previous'"
         :type="'target'"
@@ -130,5 +186,10 @@ onMounted(async () => {
     align-items: center;
     align-content: center;
     gap: 4px;
+}
+
+.context-head {
+    max-height: 50px;
+    border-bottom: 1px solid #e0e0e0;
 }
 </style>
