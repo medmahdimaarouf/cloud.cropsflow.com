@@ -4,18 +4,19 @@ export interface IPlaybookNode {
     name: string;
     icon?: string;
     className: string;
+    context?: PlaybookContext;
 }
 
 export abstract class PlaybookNode implements IPlaybookNode {
-    id: string;
-    parent?: IPlaybookNode;
-    selector: string;
+    readonly id: string;
+    readonly selector: string;
+    readonly className: string;
+    context?: PlaybookContext;
     name: string;
     icon?: string;
-    className: string;
 
-    constructor(other?: IPlaybookNode, parent?: PlaybookNode) {
-        this.parent = parent;
+    constructor(other?: IPlaybookNode, context?: PlaybookContext) {
+        this.context = context;
         this.id = other?.id || Date.now().toString();
         this.selector = other?.selector || '';
         this.name = other?.name || '';
@@ -24,20 +25,21 @@ export abstract class PlaybookNode implements IPlaybookNode {
     }
 }
 
-export class ActionNode extends PlaybookNode {}
+export class PlaybookAction extends PlaybookNode {}
 
-export class ContextNode extends PlaybookNode {
+export class PlaybookContext extends PlaybookNode {
+    public readonly children: PlaybookNode[] = [];
+
     resolvedContext?: boolean;
-    constructor(node: PlaybookNode & { resolvedContext?: boolean }, parent?: PlaybookNode) {
+    constructor(node: PlaybookNode & { resolvedContext?: boolean }, parent?: PlaybookContext) {
         super(node, parent);
         this.resolvedContext = node.resolvedContext;
     }
-    public children: PlaybookNode[] = [];
     public append(child: PlaybookNode): PlaybookNode {
-        child.parent = this;
+        child.context = this;
         this.children.push(child);
         return this;
     }
 }
 
-export class PipeNode extends PlaybookNode {}
+export class PlaybookPipe extends PlaybookNode {}

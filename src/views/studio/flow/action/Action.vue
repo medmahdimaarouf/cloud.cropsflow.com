@@ -1,39 +1,104 @@
 <script lang="ts" setup>
-import { ActionNode } from '@/models/playbook';
-import { Handle, Position, useNode, useVueFlow } from '@vue-flow/core';
-import { defineProps, onMounted, watch } from 'vue';
+import { PlaybookAction } from '@/models/playbook';
+import { Dimensions, GraphNode, Handle, Node, Position, useNode, useVueFlow, XYPosition } from '@vue-flow/core';
+import { defineProps, onMounted, reactive } from 'vue';
 
-const { updateNode } = useVueFlow();
+const { updateNode, addNodes, addEdges } = useVueFlow();
+const props = defineProps<{ node: PlaybookAction; previousNode: string }>();
+const { node: previousNode } = useNode(props.previousNode);
+const { node: vueFlowNode } = useNode();
+const playbookAction: PlaybookAction = reactive<PlaybookAction>(props.node);
 
-const props = defineProps<{
-    node: ActionNode;
-    selected: boolean;
-}>();
+function getAbsolutePosition(node: GraphNode | undefined): XYPosition {
+    let x = 0;
+    let y = 0;
+    let current = node;
 
-const { node } = useNode();
-onMounted(() => {
-    watch(
-        () => node.dimensions,
-        (dimensions) => {
-            updateNode(`${node.id}|next-placeholder`, {
-                position: {
-                    x: dimensions.width / 2 - 10,
-                    y: dimensions.height + 10
-                }
-            });
+    while (current) {
+        x += current.position.x;
+        y += current.position.y;
+        if (!current.parentNode) break;
+        current = useNode(current.parentNode).node;
+    }
+
+    return { x, y };
+}
+
+// Usage example in your component
+
+function drawNextPlaceholderNode(): Node {
+    const actualDimensions: Dimensions = vueFlowNode.dimensions;
+    const NEXT_PLACEHOLDER: Node = {
+        id: `${playbookAction.id}|next-placeholder`,
+        type: 'placeholder',
+        position: {
+            x: actualDimensions.width / 2 - 10,
+            y: actualDimensions.height + 10
+        },
+        data: {
+            node: playbookAction,
+            context: playbookAction.context
+        },
+        parentNode: vueFlowNode.id,
+        draggable: false,
+        selectable: false,
+        expandParent: false
+    };
+    addNodes([NEXT_PLACEHOLDER]);
+    addEdges([
+        {
+            id: `${playbookAction.id}|${NEXT_PLACEHOLDER.id}`,
+            source: playbookAction.id,
+            target: NEXT_PLACEHOLDER.id,
+            sourceHandle: `${playbookAction.id}-next`,
+            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`
         }
-    );
+    ]);
+
+    return NEXT_PLACEHOLDER;
+}
+
+function updatePositon() {
+    const previousNodeDimensions: Dimensions = previousNode.dimensions;
+    const previousNodePositon: XYPosition = getAbsolutePosition(previousNode);
+    const actualDimensions: Dimensions = {
+        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
+        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
+    };
+    let x = previousNodePositon.x;
+    x += previousNodeDimensions.width / 2;
+    x -= actualDimensions.width / 2;
+    updateNode(vueFlowNode.id, {
+        position: {
+            x: x,
+            y: previousNodePositon.y + previousNodeDimensions.height + 30
+        }
+    });
+}
+
+onMounted(() => {
+    updatePositon();
+    setTimeout(() => {
+        drawNextPlaceholderNode();
+    }, 0);
 });
 </script>
 
 <template>
-    <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
+    <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 my-4 bg-white rounded">
         <Avatar icon="pi pi-sitemap" size="large" />
         <div>
-            <span>{{ $props.node.name }}</span>
-            <p>Main Context</p>
+            <span class="text-xl font-bold m-0">{{ $props.node.name }}</span>
+            <p>{{ $props.node.selector }}</p>
         </div>
     </div>
+
+    <!--
+        <div class="next-container flex flex-center content-center items-center gap-2 px-4 py-2">
+            <Button icon="pi pi-plus-circle" label="Add next"></Button>
+        </div>
+    -->
+
     <Handle
         id="previous"
         type="target"
@@ -45,21 +110,12 @@ onMounted(() => {
             height: '6px'
         }"
     />
-    <Handle
-        id="next"
-        type="source"
-        :position="Position.Bottom"
-        :style="{
-            backgroundColor: 'lime',
-            borderRadius: '0%',
-            width: '6px',
-            height: '6px'
-        }"
-    />
+    <Handle id="next" type="source" :position="Position.Bottom" />
     <Handle
         id="pipe"
         type="source"
         :position="Position.Left"
+        :connectable="true"
         :style="{
             backgroundColor: 'lime',
             borderRadius: '0%',
@@ -70,6 +126,7 @@ onMounted(() => {
     <Handle
         id="context"
         type="source"
+        :connectable="true"
         :position="Position.Right"
         :style="{
             backgroundColor: 'lime',
