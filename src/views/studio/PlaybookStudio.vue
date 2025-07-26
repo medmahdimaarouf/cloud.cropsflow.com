@@ -3,6 +3,7 @@ import { PlaybookContext } from '@/models';
 import { Playbook } from '@/service/playbook-manager.service';
 import '@vue-flow/core/dist/style.css';
 import Button from 'primevue/button';
+import { ref, Ref } from 'vue';
 import { useRoute } from 'vue-router';
 import PlaybookFlow from './flow/PlaybookFlow.vue';
 const route = useRoute();
@@ -19,6 +20,19 @@ const playbook: Playbook = new Playbook({
         className: 'package.module.class'
     })
 });
+
+const activeLeftPanel: Ref<String | null> = ref(null);
+const activeRightPanel: Ref<String | null> = ref(null);
+
+function toggleLeftPanel(panelId: string): void {
+    console.log('sqdqd');
+    activeLeftPanel.value = activeLeftPanel.value !== panelId ? panelId : null;
+    activeRightPanel.value = null;
+}
+
+function toggleRightPanel(panelId: string): void {
+    activeRightPanel.value = activeRightPanel.value !== panelId ? panelId : null;
+}
 </script>
 
 <template>
@@ -53,26 +67,34 @@ const playbook: Playbook = new Playbook({
         <!-- Main layout -->
         <div class="studio-main">
             <div class="studio-toolbar left">
-                <Button icon="pi pi-folder-open" v-tooltip="'Project folders'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-box" v-tooltip="'Modules'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-info-circle" v-tooltip="'Issues'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-clock" v-tooltip="'History'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-code" v-tooltip="'Template code'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleLeftPanel('1')" icon="pi pi-folder-open" v-tooltip="'Project folders'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleLeftPanel('2')" icon="pi pi-box" v-tooltip="'Modules'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleLeftPanel('3')" icon="pi pi-info-circle" v-tooltip="'Issues'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleLeftPanel('4')" icon="pi pi-clock" v-tooltip="'History'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleLeftPanel('5')" icon="pi pi-code" v-tooltip="'Template code'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
             </div>
 
-            <div class="studio-panel left"></div>
+            <div class="studio-panel left" :class="{ active: activeLeftPanel == '1' }"></div>
+            <div class="studio-panel left" :class="{ active: activeLeftPanel == '2' }"></div>
+            <div class="studio-panel left" :class="{ active: activeLeftPanel == '3' }"></div>
+            <div class="studio-panel left" :class="{ active: activeLeftPanel == '4' }"></div>
+            <div class="studio-panel left" :class="{ active: activeLeftPanel == '5' }"></div>
 
             <div class="studio-flow">
                 <PlaybookFlow :context="playbook.context" />
             </div>
 
-            <div class="studio-panel right"></div>
+            <div class="studio-panel right" :class="{ active: activeRightPanel == '1' }"></div>
+            <div class="studio-panel right" :class="{ active: activeRightPanel == '2' }"></div>
+            <div class="studio-panel right" :class="{ active: activeRightPanel == '3' }"></div>
+            <div class="studio-panel right" :class="{ active: activeRightPanel == '4' }"></div>
+            <div class="studio-panel right" :class="{ active: activeRightPanel == '5' }"></div>
 
             <div class="studio-toolbar right">
-                <Button icon="pi pi-wrench" v-tooltip="'Configuration'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-info-circle" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-clock" size="large" variant="text" severity="secondary" class="cursor-pointer" />
-                <Button icon="pi pi-box" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleRightPanel('1')" icon="pi pi-wrench" v-tooltip="'Configuration'" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleRightPanel('1')" icon="pi pi-info-circle" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleRightPanel('1')" icon="pi pi-clock" size="large" variant="text" severity="secondary" class="cursor-pointer" />
+                <Button @click="toggleRightPanel('1')" icon="pi pi-box" size="large" variant="text" severity="secondary" class="cursor-pointer" />
             </div>
         </div>
 

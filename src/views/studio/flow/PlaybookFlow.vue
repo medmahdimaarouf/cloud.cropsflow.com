@@ -23,11 +23,13 @@ let FLOW_END_NODE: Node;
 function addPlaybookContextVueFlowNode(child: PlaybookContext, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string): Node {
     const previousNodeId: string = (typeof previous == 'string' ? previous : previous?.id) || FLOW_START_NODE.id;
     const nextId: string = (typeof next == 'string' ? next : next?.id) || FLOW_START_NODE.id;
+
     const CONTEXT_NODE: Node = {
         id: child.id,
         type: 'context',
         parentNode: childContext?.id,
         expandParent: !!childContext,
+        //extent: 'parent',
         position: { x: 0, y: 0 },
         data: {
             node: child,
@@ -52,7 +54,12 @@ function addPlaybookContextVueFlowNode(child: PlaybookContext, childContext?: Pl
         id: `${child.id}-previous`,
         type: 'custom',
         source: previousNodeId,
-        target: child.id
+        target: child.id,
+        style: {
+            stroke: '2px',
+            fill: 'red',
+            color: 'red'
+        }
     });
     return CONTEXT_NODE;
 }
@@ -63,7 +70,7 @@ function addPlaybookActionVueFlowNode(child: PlaybookAction, childContext?: Play
 
     const ACTION_NODE: Node = {
         id: child.id,
-        width: 280,
+        width: 320,
         position: { x: 0, y: 0 },
         type: 'action',
         draggable: true,
@@ -71,6 +78,17 @@ function addPlaybookActionVueFlowNode(child: PlaybookAction, childContext?: Play
         data: {
             node: child,
             previousNode: previousNodeId
+        },
+        style: {
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: '8px',
+            backgroundColor: '#ffff',
+            margin: '0px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            zIndex: -1,
+            padding: '6px',
+            'background-color': '#ffff'
         }
     };
 
@@ -79,7 +97,10 @@ function addPlaybookActionVueFlowNode(child: PlaybookAction, childContext?: Play
         id: `${child.id}-previous`,
         type: 'custom',
         source: previousNodeId,
-        target: child.id
+        target: child.id,
+        style: {
+            stroke: '2px'
+        }
     });
 
     return child;
@@ -110,7 +131,7 @@ function addChildNode(child: PlaybookNode, childContext?: PlaybookContext, previ
     if (child instanceof PlaybookPipe) addPlaybookPipeVueFlowNode(child, childContext, previous, next);
 }
 function onNextRequested(previousNode: string, childContext?: PlaybookContext, index?: number): void {
-    const next = new PlaybookContext(
+    const next = new PlaybookAction(
         {
             id: Date.now().toString(),
             name: 'Simple Action',
@@ -164,6 +185,15 @@ function focusContext(focusContext: PlaybookContext) {
     console.log(focusContext);
     //context.value = focusContext;
 }
+
+function handleNodeResize(event: any, node: any, dimensions: any) {
+    // Prevent position changes by maintaining the original position
+    /*node.position = {
+    x: node.position.x,
+    y: node.position.y
+  };*/
+    console.log(dimensions);
+}
 </script>
 
 <template>
@@ -179,7 +209,7 @@ function focusContext(focusContext: PlaybookContext) {
             <div v-if="!context.children.length" style="width: 100%; top: 80px; display: flex; align-content: center; align-items: center; justify-content: center; justify-items: center; height: 120px; z-index: 1000; position: absolute">
                 <Button @click="createFirst" class="bg-white" icon="pi pi-plus-circle" size="large" label="Click to add first step" :severity="'secondary'" outlined raised></Button>
             </div>
-            <VueFlow :default-zoom="40" :default-position="[0, 0]" :fit-view-on-init="false" :default-edge-options="{ type: 'step' }" :max-zoom="40" :min-zoom="-40">
+            <VueFlow @node-resize="handleNodeResize" :default-zoom="40" :default-position="[0, 0]" :fit-view-on-init="false" :default-edge-options="{ type: 'step' }" :max-zoom="40" :min-zoom="-40">
                 <!--<Background pattern-color="#aaa" :gap="4" />-->
                 <FlowMenu></FlowMenu>
 
@@ -214,7 +244,7 @@ function focusContext(focusContext: PlaybookContext) {
         </div>
     </div>
 </template>
-<style lang="scss" scoped>
+<style lang="scss">
 /*   DO NOT TOUCH   */
 .playbook-flow {
     position: relative;
@@ -235,5 +265,9 @@ function focusContext(focusContext: PlaybookContext) {
         width: 100%;
         background-color: rgba(223, 221, 221, 0.37);
     }
+}
+
+.vue-flow__node.selected {
+    border: 2px solid var(--primary-color);
 }
 </style>

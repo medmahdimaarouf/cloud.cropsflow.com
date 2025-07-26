@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { PlaybookContext } from '@/models/playbook';
 import { Dimensions, GraphNode, Handle, Node, Position, useNode, useVueFlow, XYPosition } from '@vue-flow/core';
+import '@vue-flow/node-resizer/dist/style.css';
 import { defineProps, onMounted, watch } from 'vue';
 
 const { updateNode, addNodes, addEdges } = useVueFlow();
@@ -12,11 +13,31 @@ const emit = defineEmits<{ (e: 'focus', context: PlaybookContext): void }>();
 const playbookContext: PlaybookContext = props.node;
 let FLOW_START_NODE: Node;
 
-let WIDTH: number = vueFlowNode.dimensions.width;
-let HEIGHT: number = vueFlowNode.dimensions.height;
+function initPositon() {
+    const previousNodeDimensions: Dimensions = previousNode.dimensions;
+    let previousNodePositon: XYPosition;
 
-let X: number = vueFlowNode.position.x;
-let Y: number = vueFlowNode.position.y;
+    const currentNodeDimensions: Dimensions = {
+        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
+        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
+    };
+
+    if (previousNode.parentNode) {
+        previousNodePositon = getAbsolutePosition(previousNode);
+    } else {
+        previousNodePositon = previousNode.position;
+    }
+
+    let x = previousNodePositon.x;
+    x += previousNodeDimensions.width / 2;
+    x -= currentNodeDimensions.width / 2;
+    updateNode(vueFlowNode.id, {
+        position: {
+            x: x,
+            y: previousNodePositon.y + previousNodeDimensions.height + 30
+        }
+    });
+}
 
 function getAbsolutePosition(node: GraphNode | undefined): XYPosition {
     let x = 0;
@@ -33,7 +54,7 @@ function getAbsolutePosition(node: GraphNode | undefined): XYPosition {
     return { x, y };
 }
 
-function drawNextPlaceholderNode(): Node {
+function drawNextPlaceholderNode(): GraphNode {
     const actualDimensions: Dimensions = vueFlowNode.dimensions;
     const NEXT_PLACEHOLDER: Node = {
         id: `${playbookContext.id}|next-placeholder`,
@@ -62,31 +83,9 @@ function drawNextPlaceholderNode(): Node {
         }
     ]);
 
-    return NEXT_PLACEHOLDER;
+    return useNode(NEXT_PLACEHOLDER.id).node;
 }
-function setPositon() {
-    const previousNodeDimensions: Dimensions = previousNode.dimensions;
-    const previousNodePositon: XYPosition = getAbsolutePosition(previousNode);
-    const currentNodeDimensions: Dimensions = {
-        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
-        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
-    };
-    let x = previousNodePositon.x;
-    x += previousNodeDimensions.width / 2;
-    x -= currentNodeDimensions.width / 2;
-    updateNode(vueFlowNode.id, {
-        position: {
-            x: x,
-            y: previousNodePositon.y + previousNodeDimensions.height + 30
-        }
-    });
-    X = vueFlowNode.position.x;
-    Y = vueFlowNode.position.y;
-}
-function setDimensions() {
-    WIDTH = vueFlowNode.dimensions.width;
-    HEIGHT = vueFlowNode.dimensions.height;
-}
+
 function drawChildNextPlaceholder(): Node {
     const currentNodeDimensions: Dimensions = {
         width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
@@ -96,6 +95,7 @@ function drawChildNextPlaceholder(): Node {
         id: `${vueFlowNode.id}-child-placeholder`,
         type: 'placeholder',
         parentNode: vueFlowNode.id,
+        expandParent: true,
         position: {
             x: currentNodeDimensions.width / 2 - 10,
             y: 60
@@ -103,7 +103,9 @@ function drawChildNextPlaceholder(): Node {
         data: {
             node: playbookContext,
             context: playbookContext
-        }
+        },
+        draggable: false,
+        selectable: false
     };
 
     addNodes(FLOW_START_NODE);
@@ -111,35 +113,48 @@ function drawChildNextPlaceholder(): Node {
     return FLOW_START_NODE;
 }
 
-function onResized(dimensions: Dimensions): void {
+let cachedDimensions: Dimensions = { width: 380, height: 140 };
+let cachedPosition: XYPosition = { x: 0, y: 0 };
+
+function onResized(oldDimensions: Dimensions, newDimensions: Dimensions): void {
     updateNode(`${playbookContext.id}|next-placeholder`, {
         position: {
-            x: dimensions.width / 2 - 10,
-            y: dimensions.height + 20
+            x: newDimensions.width / 2 - 10,
+            y: newDimensions.height + 20
         }
     });
 
     updateNode(`${vueFlowNode.id}-child-placeholder`, {
         position: {
-            x: dimensions.width / 2 - 10,
+            x: newDimensions.width / 2 - 10,
             y: 60
         }
     });
-    WIDTH = dimensions.width;
-    HEIGHT = dimensions.height;
+    if (newDimensions.width - oldDimensions.width > 0) {
+        updateNode(vueFlowNode.id, {
+            position: {
+                x: vueFlowNode.position.x - (newDimensions.width - oldDimensions.width) / 2,
+                y: vueFlowNode.position.y //- (newDimensions.height - oldDimensions.height) / 2
+            }
+        });
+    }
 }
 
 onMounted(() => {
-    setPositon();
-    setDimensions();
+    initPositon();
     drawNextPlaceholderNode();
     drawChildNextPlaceholder();
     watch(
         () => vueFlowNode.dimensions,
         (dimensions) => {
-            onResized(dimensions);
+            if (cachedDimensions) onResized(cachedDimensions, dimensions);
+            cachedDimensions = { width: Number(dimensions.width), height: Number(dimensions.height) };
         },
         { deep: true }
+    );
+    watch(
+        () => vueFlowNode.position,
+        (p) => {}
     );
 });
 
@@ -149,6 +164,10 @@ function onFocus() {
 </script>
 
 <template>
+    <!--<NodeResizer />-->
+    <div class="log">
+        <span>P [{{ vueFlowNode.position.x }},{{ vueFlowNode.position.y }}] - D [{{ vueFlowNode.dimensions.width }},{{ vueFlowNode.dimensions.height }}] </span>
+    </div>
     <div class="context-head flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-4" @click="onFocus">
         <Avatar icon="pi pi-sitemap" size="large" />
         <div>
@@ -209,5 +228,11 @@ function onFocus() {
 .context-head {
     max-height: 50px;
     border-bottom: 1px solid #e0e0e0;
+}
+
+.log {
+    position: absolute;
+    top: -22px;
+    display: flex;
 }
 </style>

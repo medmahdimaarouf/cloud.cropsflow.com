@@ -3,7 +3,7 @@ import { PlaybookAction } from '@/models/playbook';
 import { Dimensions, GraphNode, Handle, Node, Position, useNode, useVueFlow, XYPosition } from '@vue-flow/core';
 import { defineProps, onMounted, reactive } from 'vue';
 
-const { updateNode, addNodes, addEdges } = useVueFlow();
+const { updateNode, addNodes, addEdges, viewport } = useVueFlow();
 const props = defineProps<{ node: PlaybookAction; previousNode: string }>();
 const { node: previousNode } = useNode(props.previousNode);
 const { node: vueFlowNode } = useNode();
@@ -32,8 +32,8 @@ function drawNextPlaceholderNode(): Node {
         id: `${playbookAction.id}|next-placeholder`,
         type: 'placeholder',
         position: {
-            x: actualDimensions.width / 2 - 10,
-            y: actualDimensions.height + 10
+            x: actualDimensions.width / 2 - 16,
+            y: actualDimensions.height + 16
         },
         data: {
             node: playbookAction,
@@ -51,33 +51,39 @@ function drawNextPlaceholderNode(): Node {
             source: playbookAction.id,
             target: NEXT_PLACEHOLDER.id,
             sourceHandle: `${playbookAction.id}-next`,
-            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`
+            targetHandle: `${NEXT_PLACEHOLDER.id}-previous`,
+            type: 'custom',
+            selectable: false
         }
     ]);
 
     return NEXT_PLACEHOLDER;
 }
 
-function updatePositon() {
-    const previousNodeDimensions: Dimensions = previousNode.dimensions;
-    const previousNodePositon: XYPosition = getAbsolutePosition(previousNode);
-    const actualDimensions: Dimensions = {
-        width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
-        height: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().height!
-    };
-    let x = previousNodePositon.x;
-    x += previousNodeDimensions.width / 2;
-    x -= actualDimensions.width / 2;
+function updatePosition() {
+    const previousNodePosition: XYPosition = getAbsolutePosition(previousNode);
+    const previousNodeDimensions = previousNode.dimensions;
+    const zoom = viewport.value.zoom;
+
+    const nodeEl = useNode(previousNode.id).nodeEl.value;
+    if (!nodeEl) return;
+
+    const actualDOMWidth = nodeEl.getBoundingClientRect().width;
+
+    // Convert screen width to canvas width (considering zoom)
+    const actualCanvasWidth = actualDOMWidth / zoom;
+
+    const centerX = previousNodePosition.x + previousNodeDimensions.width / 2 - actualCanvasWidth / 2;
+
     updateNode(vueFlowNode.id, {
         position: {
-            x: x,
-            y: previousNodePositon.y + previousNodeDimensions.height + 30
+            x: centerX,
+            y: previousNodePosition.y + previousNodeDimensions.height + 30
         }
     });
 }
-
 onMounted(() => {
-    updatePositon();
+    updatePosition();
     setTimeout(() => {
         drawNextPlaceholderNode();
     }, 0);
@@ -85,7 +91,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 my-4 bg-white rounded">
+    <div class="flex flex-center content-center items-center gap-2 cursor-pointer p-2 w-full h-full">
         <Avatar icon="pi pi-sitemap" size="large" />
         <div>
             <span class="text-xl font-bold m-0">{{ $props.node.name }}</span>
@@ -99,17 +105,7 @@ onMounted(() => {
         </div>
     -->
 
-    <Handle
-        id="previous"
-        type="target"
-        :position="Position.Top"
-        :style="{
-            backgroundColor: 'lime',
-            borderRadius: '0%',
-            width: '6px',
-            height: '6px'
-        }"
-    />
+    <Handle id="previous" type="target" :position="Position.Top" />
     <Handle id="next" type="source" :position="Position.Bottom" />
     <Handle
         id="pipe"
@@ -123,18 +119,7 @@ onMounted(() => {
             height: '6px'
         }"
     />
-    <Handle
-        id="context"
-        type="source"
-        :connectable="true"
-        :position="Position.Right"
-        :style="{
-            backgroundColor: 'lime',
-            borderRadius: '0%',
-            width: '6px',
-            height: '6px'
-        }"
-    />
+    <Handle id="context" type="source" :connectable="true" :position="Position.Right" />
 </template>
 
 <style lang="scss">
