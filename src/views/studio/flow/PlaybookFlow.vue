@@ -3,7 +3,7 @@ import { PlaybookAction, PlaybookContext, PlaybookNode, PlaybookPipe } from '@/m
 import { Controls } from '@vue-flow/controls';
 import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
-import { onMounted, reactive } from 'vue';
+import { onMounted, ref } from 'vue';
 import Action from './action/Action.vue';
 import Context from './context/Context.vue';
 import ContextHead from './context/ContextHead.vue';
@@ -15,7 +15,7 @@ import StarterNode from './StarterNode.vue';
 
 const { onConnect, addEdges, setViewport, project, addNodes, viewport, dimensions } = useVueFlow();
 const props = defineProps<{ context: PlaybookContext }>();
-const context: PlaybookContext = reactive(props.context);
+let context = ref<PlaybookContext>(props.context);
 
 let FLOW_START_NODE: Node;
 let FLOW_END_NODE: Node;
@@ -40,10 +40,10 @@ function addPlaybookContextVueFlowNode(child: PlaybookContext, childContext?: Pl
         style: {
             display: 'flex',
             flexDirection: 'column',
-            border: '1px solid #e0e0e0',
-            borderRadius: ' 2px',
+            borderRadius: ' 8px',
             backgroundColor: '#ffff',
             margin: '0px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
             zIndex: -1
         }
     };
@@ -119,8 +119,8 @@ function onNextRequested(previousNode: string, childContext?: PlaybookContext, i
         },
         childContext
     );
-    if (childContext) context.append(childContext);
-    else context.append(next);
+    if (childContext) context.value.append(childContext);
+    else context.value.append(next);
     addChildNode(next, childContext, previousNode);
 }
 function createFirst() {
@@ -159,6 +159,11 @@ function initVueFlow(): void {
 onMounted(() => {
     initVueFlow();
 });
+
+function focusContext(focusContext: PlaybookContext) {
+    console.log(focusContext);
+    //context.value = focusContext;
+}
 </script>
 
 <template>
@@ -193,11 +198,11 @@ onMounted(() => {
                 </template>
 
                 <template #node-action="nodeProps">
-                    <Action :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" v-bind="nodeProps" />
+                    <Action :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" />
                 </template>
 
                 <template #node-context="nodeProps">
-                    <Context :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" v-bind="nodeProps" />
+                    <Context @focus="focusContext" :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" />
                 </template>
                 <template #edge-custom="edgeProps">
                     <CustomEdge v-bind="edgeProps"></CustomEdge>

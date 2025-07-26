@@ -1,14 +1,23 @@
 <script lang="ts" setup>
 import { PlaybookContext } from '@/models/playbook';
 import { Dimensions, GraphNode, Handle, Node, Position, useNode, useVueFlow, XYPosition } from '@vue-flow/core';
-import { defineProps, onMounted, reactive, watch } from 'vue';
+import { defineProps, onMounted, watch } from 'vue';
 
 const { updateNode, addNodes, addEdges } = useVueFlow();
 const props = defineProps<{ node: PlaybookContext; previousNode: string }>();
 const { node: previousNode } = useNode(props.previousNode);
-const { node: vueFlowNode } = reactive(useNode());
-const playbookContext: PlaybookContext = reactive<PlaybookContext>(props.node);
+const { node: vueFlowNode } = useNode();
+const emit = defineEmits<{ (e: 'focus', context: PlaybookContext): void }>();
+
+const playbookContext: PlaybookContext = props.node;
 let FLOW_START_NODE: Node;
+
+let WIDTH: number = vueFlowNode.dimensions.width;
+let HEIGHT: number = vueFlowNode.dimensions.height;
+
+let X: number = vueFlowNode.position.x;
+let Y: number = vueFlowNode.position.y;
+
 function getAbsolutePosition(node: GraphNode | undefined): XYPosition {
     let x = 0;
     let y = 0;
@@ -55,10 +64,8 @@ function drawNextPlaceholderNode(): Node {
 
     return NEXT_PLACEHOLDER;
 }
-function updatePositon() {
+function setPositon() {
     const previousNodeDimensions: Dimensions = previousNode.dimensions;
-    //const previousNodePositon: XYPosition = vueFlowNode.parentNode ? vueFlowNode.position : getAbsolutePosition(previousNode);
-
     const previousNodePositon: XYPosition = getAbsolutePosition(previousNode);
     const currentNodeDimensions: Dimensions = {
         width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
@@ -73,8 +80,13 @@ function updatePositon() {
             y: previousNodePositon.y + previousNodeDimensions.height + 30
         }
     });
+    X = vueFlowNode.position.x;
+    Y = vueFlowNode.position.y;
 }
-
+function setDimensions() {
+    WIDTH = vueFlowNode.dimensions.width;
+    HEIGHT = vueFlowNode.dimensions.height;
+}
 function drawChildNextPlaceholder(): Node {
     const currentNodeDimensions: Dimensions = {
         width: useNode(previousNode.id).nodeEl.value?.getBoundingClientRect().width!,
@@ -98,40 +110,46 @@ function drawChildNextPlaceholder(): Node {
 
     return FLOW_START_NODE;
 }
-function fixPlaceholdersPositons() {
+
+function onResized(dimensions: Dimensions): void {
+    updateNode(`${playbookContext.id}|next-placeholder`, {
+        position: {
+            x: dimensions.width / 2 - 10,
+            y: dimensions.height + 20
+        }
+    });
+
+    updateNode(`${vueFlowNode.id}-child-placeholder`, {
+        position: {
+            x: dimensions.width / 2 - 10,
+            y: 60
+        }
+    });
+    WIDTH = dimensions.width;
+    HEIGHT = dimensions.height;
+}
+
+onMounted(() => {
+    setPositon();
+    setDimensions();
+    drawNextPlaceholderNode();
+    drawChildNextPlaceholder();
     watch(
         () => vueFlowNode.dimensions,
         (dimensions) => {
-            console.log(dimensions);
-            updateNode(`${playbookContext.id}|next-placeholder`, {
-                position: {
-                    x: dimensions.width / 2 - 10,
-                    y: dimensions.height + 20
-                }
-            });
-
-            updateNode(`${vueFlowNode.id}-child-placeholder`, {
-                position: {
-                    x: dimensions.width / 2 - 10,
-                    y: 60
-                }
-            });
-        }
+            onResized(dimensions);
+        },
+        { deep: true }
     );
-}
-onMounted(() => {
-    updatePositon();
-    setTimeout(() => {
-        drawNextPlaceholderNode();
-    }, 0);
-
-    drawChildNextPlaceholder();
-    fixPlaceholdersPositons();
 });
+
+function onFocus() {
+    emit('focus', playbookContext);
+}
 </script>
 
 <template>
-    <div class="context-head flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
+    <div class="context-head flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-4" @click="onFocus">
         <Avatar icon="pi pi-sitemap" size="large" />
         <div>
             <span class="text-xl font-bold m-0">{{ $props.node.name }}</span>

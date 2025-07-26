@@ -77,7 +77,15 @@ const playbook: Playbook = new Playbook({
         </div>
 
         <!-- Bottom panel -->
-        <div class="studio-static-panel"></div>
+        <div class="studio-static-panel bottom">
+            <Button icon="pi pi-sitemap" size="small" label="Ai ChatGPT4" variant="text" severity="secondary" class="cursor-pointer" />
+            <i size="small" class="pi pi-chevron-right"></i>
+            <Button icon="pi pi-sitemap" size="small" label="Context AI" variant="text" severity="secondary" class="cursor-pointer" />
+            <i size="small" class="pi pi-chevron-right"></i>
+            <Button icon="pi pi-sitemap" size="small" label="Ai Deepseek" variant="text" severity="secondary" class="cursor-pointer" />
+            <i size="small" class="pi pi-chevron-right"></i>
+            <Button icon="pi pi-sitemap" size="small" label="Context AI" variant="text" severity="secondary" class="cursor-pointer" />
+        </div>
     </div>
 </template>
 
@@ -120,7 +128,9 @@ const playbook: Playbook = new Playbook({
     .studio-toolbar.right {
         border-left: 1px solid rgba(170, 170, 170, 0.37);
     }
-
+    .studio-toolbar.bottom {
+        height: 2rem;
+    }
     .studio-main {
         display: flex;
         flex: 1;
@@ -151,7 +161,7 @@ const playbook: Playbook = new Playbook({
     }
 
     .studio-static-panel {
-        height: 2.5rem;
+        height: 2rem;
         width: 100%;
         border-top: 1px solid rgba(170, 170, 170, 0.37);
     }
