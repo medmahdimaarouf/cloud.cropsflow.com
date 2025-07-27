@@ -3,7 +3,9 @@ import { PlaybookAction, PlaybookContext, PlaybookNode, PlaybookPipe } from '@/m
 import { Controls } from '@vue-flow/controls';
 import { Node, VueFlow, useVueFlow } from '@vue-flow/core';
 import { MiniMap } from '@vue-flow/minimap';
+import { useDialog } from 'primevue/usedialog';
 import { onMounted, ref } from 'vue';
+import ComponentsStore from '../ComponentsStore.vue';
 import Action from './action/Action.vue';
 import Context from './context/Context.vue';
 import ContextHead from './context/ContextHead.vue';
@@ -11,9 +13,12 @@ import CustomEdge from './CustomEdge.vue';
 import EndNode from './EndNode.vue';
 import FlowMenu from './FlowMenu.vue';
 import NextPlaceholder from './NextPlaceholder.vue';
+import Pipe from './pipe/Pipe.vue';
 import StarterNode from './StarterNode.vue';
 
 const { onConnect, addEdges, setViewport, project, addNodes, viewport, dimensions } = useVueFlow();
+const dialog = useDialog();
+
 const props = defineProps<{ context: PlaybookContext }>();
 let context = ref<PlaybookContext>(props.context);
 
@@ -106,7 +111,9 @@ function addPlaybookActionVueFlowNode(child: PlaybookAction, childContext?: Play
     return child;
 }
 
-function addPlaybookPipeVueFlowNode(child: PlaybookPipe, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string): PlaybookPipe {
+function addPlaybookPipeVueFlowNode(child: PlaybookAction, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string): PlaybookPipe {
+    const previousNodeId: string = (typeof previous == 'string' ? previous : previous?.id) || FLOW_START_NODE.id;
+    const nextId: string = (typeof next == 'string' ? next : next?.id) || FLOW_START_NODE.id;
     addNodes({
         id: child.id,
         parentNode: child.context?.id,
@@ -122,27 +129,41 @@ function addPlaybookPipeVueFlowNode(child: PlaybookPipe, childContext?: Playbook
             backgroundColor: '#ffff'
         }
     });
+    addEdges({
+        id: `${child.id}-previous`,
+        type: 'custom',
+        source: previousNodeId,
+        target: child.id,
+        style: {
+            stroke: '2px'
+        }
+    });
+
     return child;
 }
 
-function addChildNode(child: PlaybookNode, childContext?: PlaybookContext, previous?: Node | string, next?: Node | string) {
-    if (child instanceof PlaybookContext) addPlaybookContextVueFlowNode(child, childContext, previous, next);
-    if (child instanceof PlaybookAction) addPlaybookActionVueFlowNode(child, childContext, previous, next);
-    if (child instanceof PlaybookPipe) addPlaybookPipeVueFlowNode(child, childContext, previous, next);
+function addChildNode(child: PlaybookNode, previous?: Node | string, next?: Node | string) {
+    if (child instanceof PlaybookContext) addPlaybookContextVueFlowNode(child, context.value, previous, next);
+    if (child instanceof PlaybookAction) addPlaybookActionVueFlowNode(child, context.value, previous, next);
+    if (child instanceof PlaybookPipe) addPlaybookPipeVueFlowNode(child, context.value, previous, next);
+    context.value.append(child);
 }
+
 function onNextRequested(previousNode: string, childContext?: PlaybookContext, index?: number): void {
-    const next = new PlaybookAction(
-        {
-            id: Date.now().toString(),
-            name: 'Simple Action',
-            className: 'SimpleAction',
-            selector: 'action-selector'
+    dialog.open(ComponentsStore, {
+        props: {
+            header: 'Add component',
+            style: {
+                width: '80vw',
+                height: '90vh',
+                marginLeft: '2rem'
+            },
+            modal: true
         },
-        childContext
-    );
-    if (childContext) context.value.append(childContext);
-    else context.value.append(next);
-    addChildNode(next, childContext, previousNode);
+        onClose: (node: any) => {
+            addChildNode(node.data, previousNode);
+        }
+    });
 }
 function createFirst() {
     onNextRequested(FLOW_START_NODE.id);
@@ -229,6 +250,9 @@ function handleNodeResize(event: any, node: any, dimensions: any) {
 
                 <template #node-action="nodeProps">
                     <Action :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" />
+                </template>
+                <template #node-pipe="nodeProps">
+                    <Pipe :previousNode="nodeProps.data.previousNode" :node="nodeProps.data.node" />
                 </template>
 
                 <template #node-context="nodeProps">

@@ -2,13 +2,13 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
+import '@/assets/styles.scss';
 import Aura from '@primeuix/themes/aura';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
+import DialogService from 'primevue/dialogservice';
 import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
-
-import '@/assets/styles.scss';
 
 const app = createApp(App);
 
@@ -23,6 +23,7 @@ app.use(PrimeVue, {
 });
 app.use(ToastService);
 app.use(ConfirmationService);
+app.use(DialogService);
 
 app.directive('tooltip', Tooltip);
 app.mount('#app');

@@ -3,10 +3,11 @@ import { PlaybookContext } from '@/models';
 import { Playbook } from '@/service/playbook-manager.service';
 import '@vue-flow/core/dist/style.css';
 import Button from 'primevue/button';
-import { ref, Ref } from 'vue';
+import { onMounted, ref, Ref } from 'vue';
 import { useRoute } from 'vue-router';
 import PlaybookFlow from './flow/PlaybookFlow.vue';
 const route = useRoute();
+
 const id = route.params.id as string;
 
 const playbook: Playbook = new Playbook({
@@ -33,6 +34,8 @@ function toggleLeftPanel(panelId: string): void {
 function toggleRightPanel(panelId: string): void {
     activeRightPanel.value = activeRightPanel.value !== panelId ? panelId : null;
 }
+
+onMounted(() => {});
 </script>
 
 <template>
