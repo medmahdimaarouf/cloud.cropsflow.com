@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { BaseEdge, EdgeLabelRenderer, getStraightPath, useVueFlow } from '@vue-flow/core';
-import Button from 'primevue/button';
+import { BaseEdge, getSmoothStepPath, useVueFlow } from '@vue-flow/core';
 import { computed } from 'vue';
 
 const props: any = defineProps({
@@ -48,24 +47,31 @@ const props: any = defineProps({
 
 const { removeEdges } = useVueFlow();
 
-const path = computed(() => getStraightPath(props));
+const path = computed(() => getSmoothStepPath(props));
 </script>
 
 <template>
-    <BaseEdge :path="path[0]" />
+    <BaseEdge
+        :path="path[0]"
+        :style="{
+            strokeWidth: 3
+        }"
+    />
 
-    <EdgeLabelRenderer>
+    <!--<EdgeLabelRenderer>
         <div
             :style="{
                 pointerEvents: 'all',
                 position: 'absolute',
-                transform: `translate(-50%, -50%) translate(${path[1]}px,${path[2]}px)`
+                transform: `translate(-50%, -50%) translate(${path[1]}px,${path[2]}px)`,
+                zIndex: 200
             }"
             class="nodrag nopan"
         >
-            <Button class="placeholder-button" icon="pi pi-plus-circle" size="samll" severity="contrast" variant="text" raised rounded />
+            <Button class="placeholder-button bg-white" icon="pi pi-plus-circle" size="samll" raised rounded />
         </div>
     </EdgeLabelRenderer>
+    -->
 </template>
 
 <style>

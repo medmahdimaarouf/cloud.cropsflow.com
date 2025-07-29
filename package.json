@@ -13,6 +13,7 @@
         "@vue-flow/controls": "latest",
         "@vue-flow/core": "latest",
         "@vue-flow/minimap": "latest",
+        "@vue-flow/node-resizer": "^1.5.0",
         "chart.js": "3.3.2",
         "pinia": "^3.0.3",
         "primeicons": "^7.0.0",
