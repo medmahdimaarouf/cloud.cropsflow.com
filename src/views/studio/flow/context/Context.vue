@@ -179,29 +179,8 @@ function onFocus() {
     </div>
     <slot></slot>
     <!--<Button class="placeholder-button" icon="pi pi-plus-circle" size="samll" severity="contrast" variant="text" raised rounded />-->
-    <Handle
-        :id="'previous'"
-        :type="'target'"
-        :position="Position.Top"
-        :style="{
-            backgroundColor: 'lime',
-            borderRadius: '0%',
-            width: '6px',
-            height: '6px',
-            top: '-4px'
-        }"
-    />
-    <Handle
-        :id="'next'"
-        :type="'source'"
-        :position="Position.Bottom"
-        :style="{
-            backgroundColor: 'lime',
-            borderRadius: '0%',
-            width: '6px',
-            height: '6px'
-        }"
-    />
+    <Handle :id="'previous'" :type="'target'" :position="Position.Top" />
+    <Handle :id="'next'" :type="'source'" :position="Position.Bottom" />
 
     <Handle
         :id="'context'"

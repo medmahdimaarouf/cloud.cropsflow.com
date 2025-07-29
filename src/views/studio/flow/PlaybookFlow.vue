@@ -126,7 +126,15 @@ function addPlaybookPipeVueFlowNode(child: PlaybookAction, childContext?: Playbo
             previousNode: previous
         },
         style: {
-            backgroundColor: '#ffff'
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: '8px',
+            backgroundColor: '#ffff',
+            margin: '0px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            zIndex: -1,
+            padding: '6px',
+            'background-color': '#ffff'
         }
     });
     addEdges({
@@ -219,7 +227,7 @@ function handleNodeResize(event: any, node: any, dimensions: any) {
 
 <template>
     <div class="playbook-flow">
-        <div class="flex flex-center content-center items-center gap-2 cursor-pointer px-4 py-2">
+        <div class="flex flex-center content-center items-center gap-2 cursor-pointer p-2">
             <Avatar icon="pi pi-sitemap" size="large" />
             <div>
                 <span class="text-xl font-bold m-0">{{ context.name }}</span>

@@ -13,9 +13,13 @@ declare module 'vue' {
     Column: typeof import('primevue/column')['default']
     DynamicDialog: typeof import('primevue/dynamicdialog')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
+    InputText: typeof import('primevue/inputtext')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    Tab: typeof import('primevue/tab')['default']
+    TabList: typeof import('primevue/tablist')['default']
+    Tabs: typeof import('primevue/tabs')['default']
     TabView: typeof import('primevue/tabview')['default']
     Toast: typeof import('primevue/toast')['default']
   }
