@@ -9,7 +9,6 @@ import PlaybookFlow from './flow/PlaybookFlow.vue';
 import NodeOptionsInspector from './inspectors/options/NodeOptionsInspector.vue';
 
 const route = useRoute();
-
 const id = route.params.id as string;
 
 const playbook: Playbook = new Playbook({
@@ -90,7 +89,7 @@ onMounted(() => {});
                 </div>
             </div>
 
-            <div class="studio-panel left" :class="{ active: activeLeftPanel !== null }">
+            <div class="studio-panel left" :class="{ active: activeLeftPanel !== null }" v-resizable="{ right: true }">
                 <h2>Left panel</h2>
             </div>
 
@@ -101,7 +100,7 @@ onMounted(() => {});
             <div class="studio-panel right" :class="{ active: activeRightPanel !== null }">
                 <NodeOptionsInspector v-if="activeRightPanel == '1'"> </NodeOptionsInspector>
             </div>
-            <div class="studio-panel static bottom" :class="{ active: activeBottomPanel != null }">
+            <div class="studio-panel static bottom" :class="{ active: activeBottomPanel != null }" v-resizable="{ top: true }">
                 <h3>Hey i am here</h3>
             </div>
             <div class="studio-toolbar right">
@@ -113,13 +112,18 @@ onMounted(() => {});
 
         <!-- Bottom panel -->
         <div class="studio-status-bar">
-            <Button icon="pi pi-sitemap" size="small" label="Ai ChatGPT4" variant="text" severity="secondary" class="cursor-pointer" />
-            <i size="small" class="pi pi-chevron-right"></i>
-            <Button icon="pi pi-sitemap" size="small" label="Context AI" variant="text" severity="secondary" class="cursor-pointer" />
-            <i size="small" class="pi pi-chevron-right"></i>
-            <Button icon="pi pi-sitemap" size="small" label="Ai Deepseek" variant="text" severity="secondary" class="cursor-pointer" />
-            <i size="small" class="pi pi-chevron-right"></i>
-            <Button icon="pi pi-sitemap" size="small" label="Context AI" variant="text" severity="secondary" class="cursor-pointer" />
+            <div>
+                <Button icon="pi pi-sitemap" size="small" label="Ai ChatGPT4" variant="text" severity="secondary" class="cursor-pointer" />
+                <i size="small" class="pi pi-chevron-right"></i>
+                <Button icon="pi pi-sitemap" size="small" label="Context AI" variant="text" severity="secondary" class="cursor-pointer" />
+                <i size="small" class="pi pi-chevron-right"></i>
+                <Button icon="pi pi-sitemap" size="small" label="Ai Deepseek" variant="text" severity="secondary" class="cursor-pointer" />
+                <i size="small" class="pi pi-chevron-right"></i>
+                <Button icon="pi pi-sitemap" size="small" label="Context AI" variant="text" severity="secondary" class="cursor-pointer" />
+            </div>
+            <div class="mx-2">
+                <Button :icon="'pi ' + (true ? 'pi-bell' : 'pi-info-circle')" severity="contrast" variant="text" rounded aria-label="Star" />
+            </div>
         </div>
     </div>
 </template>
@@ -214,6 +218,11 @@ onMounted(() => {});
         height: 2rem;
         width: 100%;
         border-top: 1px solid rgba(170, 170, 170, 0.37);
+        display: flex;
+        flex-wrap: nowrap;
+        align-content: center;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .v-separator {
@@ -228,5 +237,9 @@ onMounted(() => {});
         background-color: rgba(170, 170, 170, 0.37);
         width: 100%;
     }
+}
+
+.p-button {
+    border-radius: 2px;
 }
 </style>
